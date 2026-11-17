@@ -61,4 +61,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeZoom();});
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(err => console.warn('AQUENIX offline support unavailable:', err)));
 }
-</script></body></html>
+</script>
+<script src="aquenix-cart.js"></script>
+</body>
+</html>
