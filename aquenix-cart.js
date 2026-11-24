@@ -31,9 +31,38 @@
 
   const cart = {};
   let verified = false;
-  let customerAccess = "";
+  let starterKitPurchases = {};
   let otpSent = false;
   let requestData = null;
+
+  // Check whether the customer previously purchased this exact Starter Kit.
+  function hasHistoricalStarterKit(id) {
+    const value = starterKitPurchases[id];
+    return value === true || value === 1 ||
+      String(value).toLowerCase() === "true" || String(value) === "1";
+  }
+
+  // Check whether this product's Starter Kit is in the current cart.
+  function hasStarterKitInCart(id) {
+    const item = cart[id + "-starter"];
+    return Boolean(item && item.qty > 0);
+  }
+
+  // Refill eligibility is product-specific.
+  function canUseRefill(id) {
+    return hasStarterKitInCart(id) ||
+      (verified && hasHistoricalStarterKit(id));
+  }
+
+  // Remove refill packs if their matching Starter Kit is no longer eligible.
+  function removeIneligibleRefills() {
+    Object.keys(cart).forEach(key => {
+      const item = cart[key];
+      if (item.kit === "refill" && !canUseRefill(item.id)) {
+        delete cart[key];
+      }
+    });
+  }
 
   function jsonp(action, data) {
     return new Promise((resolve, reject) => {
@@ -247,17 +276,33 @@
     document.getElementById("aq-items").prepend(chooser);
 
     const refillChoice = chooser.querySelector("#aq-refill-choice");
-    if (verified && customerAccess === "starter_only") {
-      refillChoice.hidden = true;
+    const refillRadio = refillChoice.querySelector('input[name="aq-kit"]');
+    const refillAllowed = canUseRefill(id);
+
+    refillRadio.disabled = !refillAllowed;
+
+    if (!refillAllowed) {
+      refillChoice.style.opacity = "0.65";
+      refillChoice.querySelector(".aq-note").textContent =
+        "First add this product's Starter Kit, or verify an account with a confirmed past purchase of this exact Starter Kit.";
+    } else {
+      refillChoice.querySelector(".aq-note").textContent =
+        "Matching product tablets only. Available because this product's Starter Kit is in your cart or in your verified purchase history.";
     }
 
     document.getElementById("aq-add-selected").onclick = () => {
       const selected = chooser.querySelector('input[name="aq-kit"]:checked');
+
+      if (!selected) {
+        alert("Please choose a pack.");
+        return;
+      }
+
       const kit = selected.value;
       const qty = Number(document.getElementById("aq-product-qty").value);
 
-      if (kit === "refill" && verified && customerAccess !== "starter_and_refill") {
-        alert("Refill packs are available to existing verified customers only.");
+      if (kit === "refill" && !canUseRefill(id)) {
+        alert("Please add this product's Starter Kit first. A Starter Kit for a different product does not qualify.");
         return;
       }
 
@@ -324,6 +369,7 @@
       delete cart[key];
     }
 
+    removeIneligibleRefills();
     update();
   };
 
@@ -435,20 +481,14 @@
         throw new Error(result?.message || "OTP verification failed.");
       }
 
+      if (!result.starterKitPurchases ||
+          typeof result.starterKitPurchases !== "object") {
+        throw new Error("Product purchase history could not be read. Please contact AQUENIX support.");
+      }
+
       verified = true;
-      customerAccess = result.access || "";
-
-      if (customerAccess !== "starter_and_refill" &&
-          customerAccess !== "starter_only") {
-        verified = false;
-        throw new Error("Customer access could not be confirmed. Please contact AQUENIX support.");
-      }
-
-      if (customerAccess === "starter_only") {
-        Object.keys(cart).forEach(key => {
-          if (cart[key].kit === "refill") delete cart[key];
-        });
-      }
+      starterKitPurchases = result.starterKitPurchases;
+      removeIneligibleRefills();
 
       checkoutButton.disabled = false;
       form.hidden = true;
@@ -458,9 +498,7 @@
       status.textContent = result.message || "Email verified successfully.";
 
       document.getElementById("aq-access-status").textContent =
-        customerAccess === "starter_and_refill"
-          ? "Verified customer: Starter Kit and Refill access enabled."
-          : "Verified new customer: Starter Kit access enabled.";
+        "Verified customer. Refill eligibility is checked separately for each product using your confirmed Starter Kit purchase history.";
 
       document.getElementById("aq-preview").textContent =
         "Email verified. You can continue to the demonstration checkout. No order or payment will be made.";
