@@ -1,8 +1,8 @@
 
 (() => {
   // AQUENIX WEBSITE
-  // Categories + Separate Starter Kit / Refill Buttons
-  // Cart + Email OTP + Product-specific refill eligibility
+  // Category navigation + product-specific Starter Kit / Refill
+  // Cart + Email OTP + product-specific refill eligibility
   // Google Sheet checkout logging
   // Demo checkout only. Live payments disabled.
 
@@ -16,7 +16,7 @@
     "04": ["Bathroom Cleaner", "Home Care"],
     "05": ["Glass & Mirror Cleaner", "Home Care"],
     "06": ["Kitchen Cleaner", "Kitchen Care"],
-    "07": ["Multi-Surface Cleaner", "Home Care"],
+    "07": ["Multipurpose Cleaner", "Home Care"],
     "08": ["Dishwash", "Kitchen Care"],
     "09": ["Tap/Limescale Cleaner", "Home Care"],
     "10": ["Laundry Detergent", "Laundry Care"],
@@ -169,6 +169,11 @@
       border-radius:15px;
       font-size:12px;
       margin:5px 0;
+    }
+
+    /* Hide Starter Kit / Refill on product listing cards */
+    .products .aq-product-actions {
+      display:none !important;
     }
 
     .aq-product-actions {
@@ -542,6 +547,10 @@
     panel.style.display = "flex";
   }
 
+  // CONNECT CART ACTIONS TO PRODUCT DETAILS PAGE
+  window.aqAddProduct = addProduct;
+  window.aqCanUseRefill = canUseRefill;
+
   // ADD CATEGORY LABELS AND TWO PRODUCT BUTTONS
   function refreshProductButtons() {
     productItems.forEach(li => {
@@ -599,6 +608,10 @@
 
       actions.append(starterButton, refillButton);
     });
+
+    if (typeof window.aqRefreshDetailRefill === "function") {
+      window.aqRefreshDetailRefill();
+    }
   }
 
   refreshProductButtons();
