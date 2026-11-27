@@ -1,62 +1,49 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#073b78">
-<meta name="description" content="AQUENIX concentrated cleaning and home-care refill concepts.">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="AQUENIX">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#102e2b">
+<meta name="description" content="AQUENIX cleaning and refill product concepts.">
+<title>AQUENIX | Cleaner Living</title>
 
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="assets/icon-192.png" type="image/png">
-<link rel="apple-touch-icon" href="assets/icon-192.png">
-
-<title>AQUENIX | Clean smarter. Refill simply.</title>
+<link rel="icon" href="assets/icon-192.png">
 
 <style>
 :root {
-  --navy:#073b78;
-  --blue:#087ac0;
-  --green:#398d25;
-  --ink:#17334d;
-  --muted:#64798b;
-  --line:#e4edf1;
-  --paper:#f7fafb;
-  --mint:#eaf7f3;
-  --shadow:0 12px 35px rgba(10,55,82,.09);
+  --black:#172321;
+  --teal:#087f75;
+  --light:#f5f8f7;
+  --grey:#687773;
+  --line:#e2eae7;
 }
 
-* {box-sizing:border-box}
+* { box-sizing:border-box; }
 
-html {scroll-behavior:smooth}
+html { scroll-behavior:smooth; }
 
 body {
   margin:0;
-  background:var(--paper);
-  color:var(--ink);
-  font:16px/1.55 Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  background:var(--light);
+  color:var(--black);
+  font-family:Arial,Helvetica,sans-serif;
+  line-height:1.6;
 }
-
-a {color:inherit;text-decoration:none}
-
-button {font:inherit}
 
 .wrap {
-  width:min(1180px,calc(100% - 40px));
+  width:min(1160px,calc(100% - 36px));
   margin:auto;
 }
-
-/* HEADER */
 
 header {
   position:sticky;
   top:0;
-  z-index:10;
-  background:#ffffffef;
-  backdrop-filter:blur(12px);
+  z-index:100;
+  background:#ffffffed;
   border-bottom:1px solid var(--line);
+  backdrop-filter:blur(12px);
 }
 
 .nav {
@@ -64,696 +51,320 @@ header {
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:20px;
+  gap:15px;
 }
 
 .brand {
   display:flex;
   align-items:center;
   gap:10px;
-  color:var(--navy);
-  font-size:28px;
+  color:var(--black);
+  text-decoration:none;
+  font-size:27px;
   font-weight:900;
-  letter-spacing:-1.5px;
-  flex-shrink:0;
+  letter-spacing:2px;
 }
-
-.mark {width:38px;height:43px}
 
 .brand small {
   display:block;
-  color:var(--blue);
-  font-size:10px;
-  letter-spacing:0;
-  font-weight:650;
-  margin-top:-5px;
+  color:var(--teal);
+  font-size:9px;
+  letter-spacing:2px;
+  font-weight:700;
+}
+
+.mark {
+  width:38px;
+  height:43px;
 }
 
 .links {
   display:flex;
   align-items:center;
-  gap:20px;
+  gap:22px;
+}
+
+.links a {
+  color:var(--black);
+  text-decoration:none;
   font-size:13px;
   font-weight:700;
-  color:#38536b;
 }
 
-.links a:hover {color:var(--blue)}
-
-.nav-cta {
-  background:var(--navy);
-  color:white!important;
-  padding:11px 17px;
-  border-radius:30px;
-}
+.links a:hover { color:var(--teal); }
 
 .menu {
   display:none;
   border:0;
   background:white;
-  color:var(--navy);
-  font-size:24px;
+  font-size:25px;
   cursor:pointer;
 }
 
-/* HERO */
-
 .hero {
-  padding:70px 0 55px;
-  background:
-    radial-gradient(circle at 83% 24%,#dff4ec 0,transparent 31%),
-    linear-gradient(120deg,#fff,#f2f9fc);
+  padding:65px 0;
+  background:linear-gradient(120deg,#fff,#eaf4f1);
 }
 
 .hero-grid {
   display:grid;
-  grid-template-columns:1.03fr .97fr;
-  gap:48px;
+  grid-template-columns:1fr 1fr;
   align-items:center;
+  gap:45px;
 }
 
-.eyebrow,.kicker {
-  color:var(--green);
+.eyebrow {
+  color:var(--teal);
   font-size:12px;
-  font-weight:850;
-  letter-spacing:1.4px;
+  font-weight:800;
+  letter-spacing:2px;
   text-transform:uppercase;
 }
 
-.dot {
-  display:inline-block;
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:#65ad37;
-  margin-right:8px;
-}
-
 .hero h1 {
-  font-size:clamp(42px,6vw,68px);
-  line-height:1.04;
-  letter-spacing:-3px;
-  color:var(--navy);
-  margin:18px 0;
+  color:var(--black);
+  font-size:clamp(42px,6vw,66px);
+  line-height:1.08;
+  letter-spacing:-2px;
+  margin:17px 0;
 }
 
-.hero h1 span {color:var(--green)}
+.hero h1 span { color:var(--teal); }
 
 .hero p {
-  max-width:560px;
-  color:#536d80;
-  font-size:18px;
-}
-
-.actions {
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  margin-top:26px;
+  max-width:540px;
+  color:var(--grey);
+  font-size:17px;
 }
 
 .btn {
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:13px 21px;
+  display:inline-block;
+  padding:13px 23px;
   border-radius:30px;
-  font-weight:750;
-  font-size:14px;
-}
-
-.primary {
-  background:var(--navy);
+  background:var(--black);
   color:white;
-  box-shadow:0 8px 20px #073b7827;
+  text-decoration:none;
+  font-weight:700;
+  margin-top:15px;
 }
 
-.ghost {
-  border:1px solid #cbdce4;
-  background:white;
-  color:var(--navy);
-}
-
-.hero-art {
-  position:relative;
-  background:#e5f3f5;
-  border-radius:28px;
-  padding:12px;
-  box-shadow:var(--shadow);
-}
-
-.hero-art img {
+.hero-image {
   width:100%;
-  height:340px;
+  height:350px;
   object-fit:cover;
-  display:block;
-  border-radius:20px;
+  border-radius:22px;
+  background:#e4efeb;
 }
-
-.art-tag {
-  position:absolute;
-  left:26px;
-  bottom:25px;
-  background:white;
-  border-radius:12px;
-  padding:10px 14px;
-  box-shadow:var(--shadow);
-  font-size:13px;
-  font-weight:800;
-  color:var(--navy);
-}
-
-/* BENEFITS */
 
 .proof {
-  padding:19px 0;
   background:white;
-  border-block:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  padding:20px 0;
 }
 
-.proof-row {
+.proof-grid {
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:14px;
+  gap:15px;
+  text-align:center;
 }
 
-.proof-item {
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:9px;
-  color:#35546c;
+.proof-grid div {
+  color:#42554f;
   font-size:13px;
-  font-weight:750;
+  font-weight:700;
 }
 
-.proof-item b {
-  display:grid;
-  place-items:center;
-  width:30px;
-  height:30px;
-  border-radius:50%;
-  background:#eaf6e7;
-  color:var(--green);
+section { padding:65px 0; }
+
+.section-heading {
+  text-align:center;
+  margin-bottom:30px;
 }
 
-/* GENERAL SECTIONS */
-
-section {padding:70px 0}
-
-.section-head {
-  display:flex;
-  align-items:end;
-  justify-content:space-between;
-  gap:22px;
-  margin-bottom:28px;
-}
-
-.section-head h2,.audience h2 {
-  font-size:clamp(30px,4vw,43px);
-  line-height:1.1;
-  letter-spacing:-1.5px;
-  color:var(--navy);
+.section-heading h2 {
+  color:var(--black);
+  font-size:clamp(28px,4vw,40px);
   margin:8px 0;
 }
 
-.section-head p {
-  max-width:580px;
-  color:var(--muted);
-  margin:0;
+.section-heading p {
+  color:var(--grey);
+  max-width:650px;
+  margin:auto;
 }
 
-.stage-note {
+.stage {
+  display:inline-block;
+  margin-top:12px;
+  padding:7px 13px;
+  background:#fff7e6;
+  border:1px solid #eee0bd;
+  border-radius:20px;
+  color:#78612c;
   font-size:12px;
-  color:#7b6a3c;
-  background:#fff8e8;
-  border:1px solid #f2e3bd;
-  padding:9px 13px;
-  border-radius:30px;
-  white-space:nowrap;
 }
 
-/* PRODUCT CATALOGUE */
-
-#products {background:#f7fafb}
-
-.product-intro {
-  margin-bottom:22px;
-}
-
-/* JavaScript inserts the category navigation here */
-
-#aq-category-area {
-  width:100%;
-  margin:20px 0 26px;
-  padding:20px;
-  background:white;
-  border:1px solid var(--line);
-  border-radius:18px;
-}
-
-#aq-category-heading {
-  color:var(--navy);
-  font-size:20px;
-  font-weight:800;
-  margin-bottom:12px;
-}
-
-#aq-category-nav {
-  display:flex;
-  flex-wrap:wrap;
-  gap:9px;
-  margin:10px 0 0;
-}
-
-.aq-category-btn {
-  background:white;
-  color:var(--navy);
-  border:1px solid #b8cbd5;
-  border-radius:24px;
-  padding:10px 17px;
-  cursor:pointer;
-  font-size:13px;
-  font-weight:700;
-  transition:.2s;
-}
-
-.aq-category-btn:hover {
-  border-color:var(--blue);
-  background:#f0f8fc;
-}
-
-.aq-category-btn.active {
-  background:var(--navy);
-  color:white;
-  border-color:var(--navy);
-}
-
-/* ONE GRID FOR ALL 15 PRODUCTS */
+#products { background:var(--light); }
 
 .products {
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
   gap:20px;
-  margin:0;
-  padding:0;
   list-style:none;
+  padding:0;
+  margin:25px 0;
 }
 
 .products li {
-  min-width:0;
   background:white;
   border:1px solid var(--line);
-  border-radius:18px;
+  border-radius:17px;
   padding:14px;
-  box-shadow:0 5px 20px #143c5009;
-  transition:transform .2s,box-shadow .2s;
   overflow:hidden;
+  transition:.2s;
 }
 
 .products li:hover {
   transform:translateY(-4px);
-  box-shadow:var(--shadow);
+  box-shadow:0 12px 30px #17352c12;
 }
 
-.products li[hidden] {
-  display:none!important;
-}
+.products li[hidden] { display:none!important; }
 
 .product-image {
   width:100%;
-  height:190px;
-  display:block;
+  height:205px;
   object-fit:cover;
   border-radius:12px;
-  background:#eaf2f3;
-  margin-bottom:13px;
-  cursor:zoom-in;
+  display:block;
+  background:#edf3f0;
+  margin-bottom:12px;
 }
 
 .product-number {
-  display:inline-block;
+  display:block;
+  color:var(--grey);
   font-size:11px;
-  color:var(--muted);
   font-weight:700;
-  margin-bottom:4px;
 }
 
 .product-name {
   display:block;
-  color:var(--navy);
-  font-size:17px;
+  color:var(--black);
+  font-size:18px;
   font-weight:800;
-  line-height:1.3;
-  margin-bottom:9px;
-}
-
-.aq-product-category {
-  display:inline-block;
-  background:#e8f1ed;
-  color:#153d35;
-  padding:5px 10px;
-  border-radius:15px;
-  font-size:11px;
-  margin:3px 0 8px;
-}
-
-.aq-product-actions {
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-top:12px;
-}
-
-.aq-product-btn {
-  flex:1;
-  min-width:105px;
-  padding:11px 8px;
-  border-radius:8px;
-  border:1px solid #153d35;
-  cursor:pointer;
-  font-size:12px;
-  font-weight:750;
-}
-
-.aq-starter-btn {
-  background:#153d35;
-  color:white;
-}
-
-.aq-refill-btn {
-  background:white;
-  color:#153d35;
-}
-
-.aq-refill-btn:disabled {
-  opacity:.45;
-  cursor:not-allowed;
-  background:#eee;
-  color:#666;
-  border-color:#aaa;
+  margin:5px 0;
 }
 
 .product-status {
   display:inline-block;
-  font-size:10px;
-  font-weight:850;
-  letter-spacing:.4px;
-  text-transform:uppercase;
-  color:#8b6a22;
-  background:#fff7e5;
-  border:1px solid #f3e5bf;
+  color:#80652b;
+  background:#fff7e6;
+  border:1px solid #eee0bd;
   border-radius:20px;
-  padding:5px 8px;
-  margin-top:10px;
+  padding:5px 10px;
+  font-size:10px;
+  margin-top:8px;
 }
 
-/* HOW IT WORKS */
+.aq-category-area { display:none; }
 
-.how {background:#edf6f5}
+.how {
+  background:#eaf3f0;
+}
 
 .how-grid {
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:17px;
+  gap:18px;
 }
 
-.step {
+.how-card {
   background:white;
-  border:1px solid #deebe7;
-  border-radius:18px;
   padding:24px;
+  border:1px solid var(--line);
+  border-radius:16px;
 }
 
-.step-num {
-  width:38px;
-  height:38px;
-  border-radius:12px;
-  background:#eaf6e7;
-  color:var(--green);
-  display:grid;
-  place-items:center;
-  font-weight:900;
-}
+.how-card h3 { color:var(--teal); }
 
-.step h3 {
-  color:var(--navy);
-  margin:15px 0 6px;
-}
-
-.step p,.audience p {
-  color:var(--muted);
+.how-card p {
+  color:var(--grey);
   font-size:14px;
 }
 
-/* PREPARATION */
-
-.prep {background:#f0f7fb}
-
-.prep-grid {
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:14px;
-}
-
-.prep-card {
-  background:white;
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:18px;
-}
-
-.prep-card h3 {
-  color:var(--navy);
-  font-size:15px;
-  margin:0 0 8px;
-}
-
-.prep-card p {
-  font-size:13px;
-  color:var(--muted);
-  margin:0;
-}
-
-.prep-warning {
-  margin-top:18px;
-  padding:15px 17px;
-  border-radius:14px;
-  background:#fff8e8;
-  border:1px solid #f2e3bd;
-  color:#765b22;
-  font-size:13px;
-}
-
-/* BUSINESS AND APPROACH */
-
-.audience {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:35px;
-  align-items:center;
-}
-
-.audience-list {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:11px;
-}
-
-.audience-list div {
-  padding:16px;
-  background:white;
-  border:1px solid var(--line);
-  border-radius:14px;
-  font-weight:750;
-  color:#31516a;
-}
-
-/* CONTACT */
-
 .contact {
-  background:linear-gradient(120deg,#063b77,#0877a7);
+  background:var(--black);
   color:white;
-  border-radius:26px;
-  padding:38px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:20px;
+  padding:40px;
+  border-radius:20px;
+  text-align:center;
 }
 
-.contact h2 {
-  font-size:32px;
-  line-height:1.1;
-  margin:0 0 8px;
-}
+.contact h2 { margin-top:0; }
 
-.contact p {
-  color:#d6e8f4;
-  margin:0;
-}
+.contact p { color:#d1ded9; }
 
-.contact .btn {
+.contact a {
+  display:inline-block;
   background:white;
-  color:var(--navy);
-  white-space:nowrap;
+  color:var(--black);
+  padding:12px 22px;
+  border-radius:25px;
+  text-decoration:none;
+  font-weight:700;
+  margin-top:10px;
 }
-
-/* FOOTER */
 
 footer {
   padding:30px 0;
-  color:#708394;
+  text-align:center;
+  color:var(--grey);
   font-size:12px;
 }
 
-.foot {
-  display:flex;
-  justify-content:space-between;
-  gap:18px;
-  align-items:center;
-  border-top:1px solid var(--line);
-  padding-top:20px;
+@media(max-width:800px) {
+  .hero-grid { grid-template-columns:1fr; }
+  .hero-image { height:260px; }
+  .products { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .how-grid { grid-template-columns:1fr; }
+  .proof-grid { grid-template-columns:repeat(2,1fr); }
+  .links { gap:12px; }
 }
 
-.foot strong {
-  color:var(--navy);
-  font-size:18px;
-}
-
-/* IMAGE VIEWER */
-
-.zoom-viewer {
-  position:fixed;
-  inset:0;
-  z-index:30;
-  background:rgba(4,22,39,.88);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:24px;
-}
-
-.zoom-viewer.open {display:flex}
-
-.zoom-viewer img {
-  max-width:min(92vw,1000px);
-  max-height:82vh;
-  object-fit:contain;
-  border-radius:16px;
-  box-shadow:0 20px 70px #0008;
-}
-
-.zoom-close {
-  position:absolute;
-  top:18px;
-  right:22px;
-  border:0;
-  border-radius:50%;
-  width:44px;
-  height:44px;
-  background:white;
-  color:var(--navy);
-  font-size:26px;
-  cursor:pointer;
-}
-
-.zoom-caption {
-  position:absolute;
-  bottom:18px;
-  color:white;
-  font-size:13px;
-  text-align:center;
-  max-width:90vw;
-}
-
-/* CART */
-
-#aq-cart-btn {
-  background:#153d35;
-  color:white;
-  border:0;
-  padding:10px 16px;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:750;
-  flex-shrink:0;
-}
-
-/* RESPONSIVE */
-
-@media(max-width:950px) {
-  .products {grid-template-columns:repeat(2,minmax(0,1fr))}
-  .hero-grid {gap:25px}
-  .prep-grid {grid-template-columns:repeat(2,1fr)}
-  .links {gap:12px}
-}
-
-@media(max-width:700px) {
-  .wrap {width:calc(100% - 28px)}
-
-  .nav {min-height:66px}
-  .brand {font-size:23px}
-  .menu {display:block}
+@media(max-width:650px) {
+  .nav { min-height:66px; }
+  .brand { font-size:22px; }
+  .menu { display:block; }
 
   .links {
     display:none;
     position:absolute;
+    top:66px;
     left:0;
     right:0;
-    top:66px;
+    padding:20px;
     background:white;
-    padding:18px 22px;
     flex-direction:column;
-    align-items:stretch;
+    align-items:flex-start;
     border-bottom:1px solid var(--line);
   }
 
-  .links.open {display:flex}
+  .links.open { display:flex; }
 
-  .hero {padding:45px 0 35px}
-  .hero-grid {grid-template-columns:1fr}
-  .hero h1 {letter-spacing:-2px}
-  .hero p {font-size:16px}
-  .hero-art img {height:230px}
-
-  .proof-row {grid-template-columns:1fr 1fr}
-  .proof-item {justify-content:flex-start;font-size:12px}
-
-  section {padding:50px 0}
-  .section-head {display:block}
-
-  .stage-note {
-    display:inline-block;
-    margin-top:12px;
-    white-space:normal;
-  }
-
-  #aq-category-area {padding:15px}
-  #aq-category-nav {gap:7px}
-  .aq-category-btn {padding:9px 12px;font-size:12px}
-
-  .products {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .products li {padding:9px;border-radius:13px}
-  .product-image {height:130px}
-  .product-name {font-size:14px}
-  .aq-product-btn {min-width:0;font-size:11px;padding:9px 5px}
-
-  .how-grid,.audience {grid-template-columns:1fr}
-  .prep-grid {grid-template-columns:1fr}
-
-  .contact {display:block;padding:27px}
-  .contact .btn {margin-top:18px}
-
-  .foot {display:block}
-  .foot span {display:block;margin-top:7px}
-
-  #aq-cart-btn {padding:9px 10px;font-size:12px}
+  .hero { padding:42px 0; }
+  section { padding:45px 0; }
+  .products { gap:10px; }
+  .products li { padding:9px; }
+  .product-image { height:135px; }
+  .product-name { font-size:14px; }
+  .contact { padding:25px 15px; }
 }
 
 @media(max-width:370px) {
-  .products {grid-template-columns:1fr}
-  .product-image {height:190px}
+  .products { grid-template-columns:1fr; }
+  .product-image { height:190px; }
 }
 </style>
 </head>
@@ -765,22 +376,21 @@ footer {
 
     <a class="brand" href="#home">
       <svg class="mark" viewBox="0 0 48 54" aria-hidden="true">
-        <path d="M24 2C17 14 5 25 5 36a19 19 0 0 0 38 0C43 25 31 14 24 2Z" fill="#087ac0"/>
-        <path d="M24 13c-5 9-12 17-12 24a12 12 0 0 0 24 0c0-7-7-15-12-24Z" fill="#bdeafa"/>
-        <path d="M7 39c8-1 15 1 21 8-8 4-17 2-21-8Z" fill="#56a62b"/>
+        <path d="M24 2C17 14 5 25 5 36a19 19 0 0 0 38 0C43 25 31 14 24 2Z" fill="#087f75"/>
+        <path d="M24 13C19 22 12 29 12 37a12 12 0 0 0 24 0c0-8-7-15-12-24Z" fill="#bce7df"/>
+        <path d="M7 39c8-1 15 1 21 8-8 4-17 2-21-8Z" fill="#172321"/>
       </svg>
-      <span>AQUENIX<small>Clean smarter. Refill simply.</small></span>
+      <span>AQUENIX<small>CLEANER LIVING</small></span>
     </a>
 
     <button class="menu" id="menu" aria-label="Open menu">☰</button>
 
     <nav class="links" id="links">
+      <a href="#home">Home</a>
       <a href="#products">Products</a>
       <a href="#how">How it works</a>
-      <a href="#prepare">Prepare liquid</a>
-      <a href="#approach">Our approach</a>
-      <a href="#business">Business solutions</a>
-      <a class="nav-cta" href="#contact">Partner with us</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
     </nav>
 
   </div>
@@ -788,195 +398,99 @@ footer {
 
 <main id="home">
 
-<!-- HERO -->
-
 <section class="hero">
   <div class="wrap hero-grid">
 
     <div>
-      <div class="eyebrow"><span class="dot"></span>A new way to clean</div>
+      <div class="eyebrow">A new approach to everyday cleaning</div>
 
       <h1>Clean smarter.<br><span>Refill simply.</span></h1>
 
       <p>
-        Discover AQUENIX’s developing range of concentrated cleaning
-        and home-care concepts, designed around a simple tablet-to-water
-        refill idea.
+        Discover AQUENIX cleaning and home-care product concepts.
+        Our refill-first idea brings reusable bottles and
+        water-activated tablet concepts together.
       </p>
 
-      <div class="actions">
-        <a class="btn primary" href="#products">Explore product range</a>
-        <a class="btn ghost" href="#how">How it works</a>
-      </div>
+      <a class="btn" href="#products">Explore our collection</a>
     </div>
 
-    <div class="hero-art">
-      <img src="assets/home-surface-care.jpg"
-           alt="AQUENIX cleaning product concept bottles and tablets">
-      <div class="art-tag">Concentrated cleaning concepts</div>
+    <div>
+      <img class="hero-image"
+           src="assets/home-surface-care.jpg"
+           alt="AQUENIX home care product concept">
     </div>
 
   </div>
 </section>
 
-<!-- BENEFITS -->
-
 <div class="proof">
-  <div class="wrap proof-row">
-    <div class="proof-item"><b>↻</b>Refill-focused concept</div>
-    <div class="proof-item"><b>◇</b>Tablet / pod to water</div>
-    <div class="proof-item"><b>♧</b>Less packaging ambition</div>
-    <div class="proof-item"><b>⌂</b>Home & business care</div>
+  <div class="wrap proof-grid">
+    <div>Reusable bottle concept</div>
+    <div>Tablet-to-water concept</div>
+    <div>Refill-first approach</div>
+    <div>Home and business care</div>
   </div>
 </div>
-
-<!-- PRODUCT CATALOGUE -->
 
 <section id="products">
   <div class="wrap">
 
-    <div class="section-head product-intro">
-      <div>
-        <div class="kicker">Our developing product range</div>
-        <h2>Everyday care, reimagined.</h2>
-        <p>
-          Explore 15 product concepts. Browse by category or view
-          the complete collection. Select a product to explore
-          its Starter Kit and Refill options.
-        </p>
-      </div>
-
-      <div class="stage-note">
-        Development-stage concepts · Not yet live
-      </div>
+    <div class="section-heading">
+      <div class="eyebrow">Explore AQUENIX</div>
+      <h2>Everyday care, reimagined.</h2>
+      <p>
+        Explore our product categories and developing product range.
+        Select a category to view its products.
+      </p>
+      <span class="stage">Product development stage · Not available for sale yet</span>
     </div>
-
-    <!--
-      IMPORTANT:
-      aquenix.js inserts category navigation immediately
-      before the single .products list below.
-    -->
 
     <ul class="products">
 
       <li>
-        <img class="product-image" src="assets/personal-care.jpg"
-             alt="AQUENIX foaming handwash concept">
+        <img class="product-image"
+             src="assets/personal-care.jpg"
+             alt="Foaming handwash concept">
         <span class="product-number">PRODUCT 01</span>
         <span class="product-name">01 · Foaming Handwash</span>
         <span class="product-status">In development</span>
       </li>
 
       <li>
-        <img class="product-image" src="assets/home-surface-care.jpg"
-             alt="AQUENIX floor cleaner concept">
+        <img class="product-image"
+             src="assets/home-surface-care.jpg"
+             alt="Floor cleaner concept">
         <span class="product-number">PRODUCT 02</span>
         <span class="product-name">02 · Floor Cleaner</span>
         <span class="product-status">In development</span>
       </li>
 
       <li>
-        <img class="product-image" src="assets/toilet-specialty-care.jpg"
-             alt="AQUENIX toilet cleaner concept">
-        <span class="product-number">PRODUCT 03</span>
-        <span class="product-name">03 · Toilet Cleaner</span>
-        <span class="product-status">In development</span>
-      </li>
-
-      <li>
-        <img class="product-image" src="assets/home-surface-care.jpg"
-             alt="AQUENIX bathroom cleaner concept">
+        <img class="product-image"
+             src="assets/toilet-specialty-care.jpg"
+             alt="Bathroom cleaner concept">
         <span class="product-number">PRODUCT 04</span>
         <span class="product-name">04 · Bathroom Cleaner</span>
         <span class="product-status">In development</span>
       </li>
 
       <li>
-        <img class="product-image" src="assets/home-surface-care.jpg"
-             alt="AQUENIX glass and mirror cleaner concept">
+        <img class="product-image"
+             src="assets/appliance-care.jpg"
+             alt="Glass and mirror cleaner concept">
         <span class="product-number">PRODUCT 05</span>
         <span class="product-name">05 · Glass & Mirror Cleaner</span>
         <span class="product-status">In development</span>
       </li>
 
       <li>
-        <img class="product-image" src="assets/home-surface-care.jpg"
-             alt="AQUENIX kitchen cleaner concept">
-        <span class="product-number">PRODUCT 06</span>
-        <span class="product-name">06 · Kitchen Cleaner</span>
-        <span class="product-status">In development</span>
-      </li>
-
-      <li>
-        <img class="product-image" src="assets/home-surface-care.jpg"
-             alt="AQUENIX multi-surface cleaner concept">
+        <img class="product-image"
+             src="assets/home-surface-care.jpg"
+             alt="Multipurpose cleaner concept">
         <span class="product-number">PRODUCT 07</span>
-        <span class="product-name">07 · Multi-Surface Cleaner</span>
+        <span class="product-name">07 · Multipurpose Cleaner</span>
         <span class="product-status">In development</span>
-      </li>
-
-      <li>
-        <img class="product-image" src="assets/dish-care.jpg"
-             alt="AQUENIX dishwash concept">
-        <span class="product-number">PRODUCT 08</span>
-        <span class="product-name">08 · Dishwash</span>
-        <span class="product-status">In development</span>
-      </li>
-
-      <li>
-        <img class="product-image" src="assets/toilet-specialty-care.jpg"
-             alt="AQUENIX tap and limescale cleaner concept">
-        <span class="product-number">PRODUCT 09</span>
-        <span class="product-name">09 · Tap/Limescale Cleaner</span>
-        <span class="product-status">In development</span>
-      </li>
-
-      <li>
-        <img class="product-image" src="assets/laundry-fabric-care.jpg"
-             alt="AQUENIX laundry detergent concept">
-        <span class="product-number">PRODUCT 10</span>
-        <span class="product-name">10 · Laundry Detergent</span>
-        <span class="product-status">In development</span>
-      </li>
-
-      <li>
-        <img class="product-image" src="assets/air-odour-care.jpg"
-             alt="AQUENIX air freshener concept">
-        <span class="product-number">PRODUCT 11</span>
-        <span class="product-name">11 · Air Freshener</span>
-        <span class="product-status">In development</span>
-      </li>
-
-      <li>
-        <img class="product-image" src="assets/air-odour-care.jpg"
-             alt="AQUENIX odour eliminator concept">
-        <span class="product-number">PRODUCT 12</span>
-        <span class="product-name">12 · Odour Eliminator</span>
-        <span class="product-status">In development</span>
-      </li>
-
-      <li>
-        <img class="product-image" src="assets/appliance-care.jpg"
-             alt="AQUENIX washing machine cleaner concept">
-        <span class="product-number">PRODUCT 13</span>
-        <span class="product-name">13 · Washing-machine Descaler/Cleaner</span>
-        <span class="product-status">In development</span>
-      </li>
-
-      <li>
-        <img class="product-image" src="assets/laundry-fabric-care.jpg"
-             alt="AQUENIX stain remover concept">
-        <span class="product-number">PRODUCT 14</span>
-        <span class="product-name">14 · Stain Remover</span>
-        <span class="product-status">In development</span>
-      </li>
-
-      <li>
-        <img class="product-image" src="assets/vehicle-care.jpg"
-             alt="AQUENIX car and vehicle cleaner concept">
-        <span class="product-number">PRODUCT 15</span>
-        <span class="product-name">15 · Car/Vehicle Cleaner</span>
-        <span class="product-status">Exploring feasibility</span>
       </li>
 
     </ul>
@@ -984,225 +498,72 @@ footer {
   </div>
 </section>
 
-<!-- HOW IT WORKS -->
-
 <section class="how" id="how">
   <div class="wrap">
-
-    <div class="section-head">
-      <div>
-        <div class="kicker">The refill concept</div>
-        <h2>Simple idea. Fresh start.</h2>
-        <p>
-          The intended experience is designed to make refilling
-          straightforward. Final directions will depend on each
-          product’s validated formulation.
-        </p>
-      </div>
+    <div class="section-heading">
+      <div class="eyebrow">Simple concept</div>
+      <h2>How the refill idea works</h2>
+      <p>Our planned product experience is designed around three simple steps.</p>
     </div>
 
     <div class="how-grid">
-
-      <div class="step">
-        <div class="step-num">01</div>
-        <h3>Add water</h3>
-        <p>Fill the reusable bottle with the specified amount of suitable water.</p>
+      <div class="how-card">
+        <h3>01 · Choose</h3>
+        <p>Select the AQUENIX product and its reusable bottle starter kit.</p>
       </div>
 
-      <div class="step">
-        <div class="step-num">02</div>
-        <h3>Add tablet or pod</h3>
-        <p>Introduce the product-specific concentrated tablet or pod and allow it to dissolve as directed.</p>
+      <div class="how-card">
+        <h3>02 · Add water</h3>
+        <p>Add water and the matching product tablet according to the final validated instructions.</p>
       </div>
 
-      <div class="step">
-        <div class="step-num">03</div>
-        <h3>Use & refill</h3>
-        <p>Use the prepared product according to its label instructions, then refill when needed.</p>
+      <div class="how-card">
+        <h3>03 · Refill</h3>
+        <p>Reuse the bottle and choose the matching refill when available.</p>
       </div>
-
     </div>
   </div>
 </section>
 
-<!-- PREPARE LIQUID -->
-
-<section class="prep" id="prepare">
+<section id="about">
   <div class="wrap">
-
-    <div class="section-head">
-      <div>
-        <div class="kicker">From concentrate to ready-to-use</div>
-        <h2>How to prepare your liquid.</h2>
-        <p>
-          A preparation workflow for the future AQUENIX refill system.
-          Exact water quantity, dissolving time and usage directions
-          must be printed on each product label after testing.
-        </p>
-      </div>
-    </div>
-
-    <div class="prep-grid">
-
-      <div class="prep-card">
-        <h3>01 · Check the label</h3>
-        <p>Confirm the product, bottle size, water quantity and preparation instructions.</p>
-      </div>
-
-      <div class="prep-card">
-        <h3>02 · Add measured water</h3>
-        <p>Use clean water of the quality specified for that formulation.</p>
-      </div>
-
-      <div class="prep-card">
-        <h3>03 · Add tablet or pod</h3>
-        <p>Place the complete product-specific tablet or pod into the bottle.</p>
-      </div>
-
-      <div class="prep-card">
-        <h3>04 · Allow it to dissolve</h3>
-        <p>Follow the product-specific dissolving and mixing directions.</p>
-      </div>
-
-      <div class="prep-card">
-        <h3>05 · Check before use</h3>
-        <p>Confirm the concentrate has dissolved and the liquid looks as expected.</p>
-      </div>
-
-      <div class="prep-card">
-        <h3>06 · Label the bottle</h3>
-        <p>Identify the product and preparation date.</p>
-      </div>
-
-      <div class="prep-card">
-        <h3>07 · Use as directed</h3>
-        <p>Apply only to the surfaces and uses stated on the product label.</p>
-      </div>
-
-      <div class="prep-card">
-        <h3>08 · Store safely</h3>
-        <p>Keep the prepared liquid in its labelled bottle and observe validated shelf life.</p>
-      </div>
-
-    </div>
-
-    <div class="prep-warning">
-      <strong>Development-stage note:</strong>
-      These are general concept steps, not final product instructions.
-      Do not publish fixed water volumes, mixing times, shelf life
-      or performance claims until each formula has been tested.
-      Never mix cleaning products or combine concentrates.
-    </div>
-
-  </div>
-</section>
-
-<!-- OUR APPROACH -->
-
-<section id="approach">
-  <div class="wrap audience">
-
-    <div>
-      <div class="kicker">Our approach</div>
-      <h2>Designed around a refill mindset.</h2>
+    <div class="section-heading">
+      <div class="eyebrow">About AQUENIX</div>
+      <h2>Designed around refills.</h2>
       <p>
-        AQUENIX is exploring concentrated product formats and
-        reusable-bottle systems that may help reduce the need
-        to repeatedly purchase ready-to-use liquid packaging.
+        AQUENIX is developing a range of household cleaning
+        concepts for customers and business users.
+        Product formulations, testing, packaging and final
+        specifications are being developed.
       </p>
     </div>
-
-    <div class="audience-list">
-      <div>♻ Refill-led thinking</div>
-      <div>💧 Concentrated formats</div>
-      <div>🏡 Everyday home care</div>
-      <div>🏢 Business applications</div>
-    </div>
-
   </div>
 </section>
-
-<!-- BUSINESS SOLUTIONS -->
-
-<section id="business">
-  <div class="wrap">
-
-    <div class="section-head">
-      <div>
-        <div class="kicker">For homes & businesses</div>
-        <h2>One platform. Multiple needs.</h2>
-        <p>
-          Our developing portfolio is intended to explore household
-          and professional cleaning applications.
-        </p>
-      </div>
-    </div>
-
-    <div class="audience-list">
-      <div>Households</div>
-      <div>Offices & workplaces</div>
-      <div>Hotels & hospitality</div>
-      <div>Facility-management teams</div>
-      <div>Private-label partners</div>
-      <div>Institutional buyers</div>
-    </div>
-
-  </div>
-</section>
-
-<!-- CONTACT -->
 
 <section id="contact">
   <div class="wrap">
-
     <div class="contact">
-      <div>
-        <h2>Let’s build a cleaner refill future.</h2>
-        <p>
-          Interested in product development, business partnerships
-          or private-label discussions?
-        </p>
-      </div>
-
-      <a class="btn" href="https://github.com/Offshy84/AQUENIX">
-        View AQUENIX project
-      </a>
+      <h2>Build a cleaner refill future with us.</h2>
+      <p>For business enquiries, distribution and partnership discussions.</p>
+      <a href="mailto:hello@aquenix.in">Contact AQUENIX</a>
     </div>
-
   </div>
 </section>
 
 </main>
 
-<!-- IMAGE VIEWER -->
-
-<div class="zoom-viewer" id="zoomViewer"
-     role="dialog" aria-modal="true"
-     aria-label="Enlarged product image">
-
-  <button class="zoom-close" id="zoomClose"
-          aria-label="Close enlarged image">×</button>
-
-  <img id="zoomImage" alt="Enlarged AQUENIX product concept">
-
-  <div class="zoom-caption" id="zoomCaption">
-    AQUENIX product concept · Illustrative website visual
-  </div>
-</div>
-
-<!-- FOOTER -->
-
 <footer>
-  <div class="wrap foot">
+  <div class="wrap">
     <strong>AQUENIX</strong>
-    <span>Clean smarter. Refill simply. · Development-stage concepts only.</span>
-    <span>© <span id="year"></span> AQUENIX</span>
+    <p>Product concepts under development. Final product details will be published after validation.</p>
+    © AQUENIX. All rights reserved.
   </div>
 </footer>
 
-<script>
-/* MOBILE NAVIGATION */
+<script src="aquenix-cart.js"></script>
+<script src="aquenix-storefront.js"></script>
 
+<script>
 const menu = document.getElementById("menu");
 const links = document.getElementById("links");
 
@@ -1210,80 +571,12 @@ menu.addEventListener("click", () => {
   links.classList.toggle("open");
 });
 
-links.querySelectorAll("a").forEach(a => {
-  a.addEventListener("click", () => links.classList.remove("open"));
-});
-
-/* FOOTER YEAR */
-
-document.getElementById("year").textContent =
-  new Date().getFullYear();
-
-/* PRODUCT IMAGE ZOOM */
-
-const viewer = document.getElementById("zoomViewer");
-const zoomImage = document.getElementById("zoomImage");
-const zoomCaption = document.getElementById("zoomCaption");
-
-const closeZoom = () => {
-  viewer.classList.remove("open");
-  document.body.style.overflow = "";
-};
-
-function enableImageZoom(img) {
-  img.setAttribute("tabindex","0");
-  img.setAttribute("role","button");
-
-  const open = () => {
-    zoomImage.src = img.src;
-    zoomImage.alt = img.alt;
-    zoomCaption.textContent =
-      img.alt + " · Illustrative AQUENIX website concept";
-
-    viewer.classList.add("open");
-    document.body.style.overflow = "hidden";
-  };
-
-  img.addEventListener("click",open);
-
-  img.addEventListener("keydown",e => {
-    if(e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      open();
-    }
+links.querySelectorAll("a").forEach(link => {
+  link.addEventListener("click", () => {
+    links.classList.remove("open");
   });
-}
-
-document.querySelectorAll(".product-image,.hero-art img")
-  .forEach(enableImageZoom);
-
-document.getElementById("zoomClose")
-  .addEventListener("click",closeZoom);
-
-viewer.addEventListener("click",e => {
-  if(e.target === viewer) closeZoom();
 });
-
-document.addEventListener("keydown",e => {
-  if(e.key === "Escape") closeZoom();
-});
-
-/* SERVICE WORKER */
-
-if("serviceWorker" in navigator &&
-   location.protocol.startsWith("http")) {
-
-  window.addEventListener("load",() => {
-    navigator.serviceWorker.register("./sw.js")
-      .catch(err => console.warn(
-        "AQUENIX offline support unavailable:",err
-      ));
-  });
-}
 </script>
 
-<!-- KEEP THE EXISTING WEBSITE SCRIPT LOADER -->
-<script src="aquenix-cart.js"></script>
-<script src="aquenix-storefront.js"></script>
 </body>
 </html>
