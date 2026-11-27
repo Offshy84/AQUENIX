@@ -1,8 +1,8 @@
 
-/* AQUENIX CATEGORY-FIRST STOREFRONT
-   Five launch products.
-   Starter Kit / Refill appear only on product details.
-   Existing cart, email OTP and demo checkout are retained.
+/* AQUENIX STOREFRONT
+   Six categories | Five launch products
+   Product details | Starter Kit and Refill
+   Compatible with existing AQUENIX cart
 */
 
 (() => {
@@ -12,91 +12,55 @@
     "01": {
       name: "Foaming Handwash",
       category: "Personal Care",
-      image: "assets/personal-care.jpg",
-      colour: "#168477",
-      shape: "pump"
+      image: "assets/personal-care.jpg"
     },
     "02": {
       name: "Floor Cleaner",
       category: "Home Care",
-      image: "assets/home-surface-care.jpg",
-      colour: "#168477",
-      shape: "bottle"
+      image: "assets/home-surface-care.jpg"
     },
     "04": {
       name: "Bathroom Cleaner",
       category: "Home Care",
-      image: "assets/toilet-specialty-care.jpg",
-      colour: "#1684a0",
-      shape: "trigger"
+      image: "assets/toilet-specialty-care.jpg"
     },
     "05": {
       name: "Glass & Mirror Cleaner",
       category: "Home Care",
-      image: "assets/appliance-care.jpg",
-      colour: "#2996a6",
-      shape: "trigger"
+      image: "assets/appliance-care.jpg"
     },
     "07": {
       name: "Multipurpose Cleaner",
       category: "Home Care",
-      image: "assets/home-surface-care.jpg",
-      colour: "#168477",
-      shape: "trigger"
+      image: "assets/home-surface-care.jpg"
     }
   };
 
   const categories = [
-    {
-      name: "Personal Care",
-      image: "assets/personal-care.jpg",
-      note: "1 launch product",
-      active: true
-    },
-    {
-      name: "Home Care",
-      image: "assets/home-surface-care.jpg",
-      note: "4 launch products",
-      active: true
-    },
-    {
-      name: "Kitchen Care",
-      image: "assets/dish-care.jpg",
-      note: "Coming soon",
-      active: false
-    },
-    {
-      name: "Laundry Care",
-      image: "assets/laundry-fabric-care.jpg",
-      note: "Coming soon",
-      active: false
-    },
-    {
-      name: "Air Care",
-      image: "assets/air-odour-care.jpg",
-      note: "Coming soon",
-      active: false
-    },
-    {
-      name: "Vehicle Care",
-      image: "assets/vehicle-care.jpg",
-      note: "Coming soon",
-      active: false
-    }
+    { name: "Personal Care", image: "assets/personal-care.jpg", note: "1 product", active: true },
+    { name: "Home Care", image: "assets/home-surface-care.jpg", note: "4 products", active: true },
+    { name: "Kitchen Care", image: "assets/dish-care.jpg", note: "Coming soon", active: false },
+    { name: "Laundry Care", image: "assets/laundry-fabric-care.jpg", note: "Coming soon", active: false },
+    { name: "Air Care", image: "assets/air-odour-care.jpg", note: "Coming soon", active: false },
+    { name: "Vehicle Care", image: "assets/vehicle-care.jpg", note: "Coming soon", active: false }
   ];
 
   const style = document.createElement("style");
 
   style.textContent = `
-    #aq-category-area {
-      display:none !important;
-    }
-
     .aq-categories {
       display:grid;
       grid-template-columns:repeat(3,minmax(0,1fr));
       gap:18px;
       margin:25px 0;
+    }
+
+    .aq-categories[hidden],
+    .aq-listing[hidden],
+    .aq-detail[hidden],
+    .products[hidden],
+    .products li[hidden] {
+      display:none !important;
     }
 
     .aq-category-card {
@@ -108,12 +72,10 @@
       text-align:left;
       cursor:pointer;
       box-shadow:0 8px 24px #102c3810;
-      transition:.2s;
     }
 
     .aq-category-card:hover {
-      transform:translateY(-4px);
-      box-shadow:0 14px 30px #102c3818;
+      transform:translateY(-3px);
     }
 
     .aq-category-card img {
@@ -134,11 +96,6 @@
       display:block;
       padding:3px 14px 15px;
       color:#687a74;
-    }
-
-    .aq-category-card:disabled {
-      opacity:.65;
-      cursor:default;
     }
 
     .aq-back {
@@ -248,32 +205,8 @@
       border-color:#aaa;
     }
 
-    .aq-product-category {
-      display:inline-block;
-      background:#e8f1ed;
-      color:#153d35;
-      padding:5px 10px;
-      border-radius:15px;
-      font-size:11px;
-      margin:5px 0;
-    }
-
-    /* Buttons are not shown on product listing cards. */
     .products .aq-product-actions {
       display:none !important;
-    }
-
-    .products li[hidden] {
-      display:none !important;
-    }
-
-    .products li.aq-clickable-product {
-      cursor:pointer;
-    }
-
-    .products li.aq-clickable-product:focus-visible {
-      outline:3px solid #168477;
-      outline-offset:3px;
     }
 
     @media(max-width:760px) {
@@ -288,10 +221,6 @@
 
       .aq-category-card strong {
         font-size:14px;
-      }
-
-      .aq-store-title {
-        font-size:23px;
       }
 
       .aq-detail {
@@ -324,18 +253,26 @@
   function start() {
     const section = document.querySelector("#products .wrap");
     const list = document.querySelector(".products");
-    const oldNav = document.getElementById("aq-category-area");
 
-    if (!section || !list || !oldNav) {
-      console.error("AQUENIX storefront: required website elements missing.");
+    if (!section || !list) {
+      console.error("AQUENIX: Homepage product section not found.");
       return;
+    }
+
+    // Create the hidden compatibility section if missing.
+    let oldNav = document.getElementById("aq-category-area");
+
+    if (!oldNav) {
+      oldNav = document.createElement("div");
+      oldNav.id = "aq-category-area";
+      section.appendChild(oldNav);
     }
 
     oldNav.style.display = "none";
 
     const cards = [...list.querySelectorAll("li")];
 
-    // Keep only the five agreed launch products.
+    // Prepare the five launch products.
     cards.forEach(card => {
       const number = card.querySelector(".product-number");
       const match = number?.textContent.match(/\d{2}/);
@@ -357,7 +294,7 @@
       const image = card.querySelector(".product-image");
       if (image) {
         image.src = item.image;
-        image.alt = "AQUENIX " + item.name + " product concept";
+        image.alt = "AQUENIX " + item.name + " concept";
       }
 
       card.classList.add("aq-clickable-product");
@@ -365,20 +302,10 @@
       card.setAttribute("role", "button");
       card.setAttribute("aria-label", "View " + item.name);
 
-      const categoryLabel = document.createElement("span");
-      categoryLabel.className = "aq-product-category";
-      categoryLabel.textContent = item.category;
-
-      const status = card.querySelector(".product-status");
-      if (status) {
-        status.textContent = "In development";
-        card.insertBefore(categoryLabel, status);
-      }
-
       card.hidden = true;
     });
 
-    // Homepage category cards.
+    // Build category homepage.
     const categoryGrid = document.createElement("div");
     categoryGrid.className = "aq-categories";
 
@@ -411,8 +338,9 @@
 
     section.insertBefore(categoryGrid, oldNav);
 
-    // Category product listing screen.
+    // Build category listing screen.
     const listingView = document.createElement("div");
+    listingView.className = "aq-listing";
     listingView.hidden = true;
 
     const back = document.createElement("button");
@@ -431,7 +359,7 @@
     listingView.append(back, heading, search);
     section.insertBefore(listingView, list);
 
-    // Individual product details screen.
+    // Build product detail screen.
     const detailView = document.createElement("div");
     detailView.className = "aq-detail";
     detailView.hidden = true;
@@ -445,7 +373,7 @@
 
       cards.forEach(card => card.hidden = true);
 
-      section.scrollIntoView({ behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function showCategory(name) {
@@ -503,7 +431,7 @@
       const note = document.createElement("p");
       note.className = "aq-detail-note";
       note.textContent =
-        "AQUENIX product concept. Formulation, pack size, price and final specifications are still under development.";
+        "AQUENIX product concept. Formulation, pack size, price and final specifications are under development.";
 
       const actions = document.createElement("div");
       actions.className = "aq-detail-actions";
@@ -511,6 +439,7 @@
       const starter = document.createElement("button");
       starter.className = "aq-detail-starter";
       starter.textContent = "Starter Kit";
+
       starter.onclick = () => {
         if (typeof window.aqAddProduct === "function") {
           window.aqAddProduct(id, "starter");
@@ -522,13 +451,15 @@
       const refill = document.createElement("button");
       refill.className = "aq-detail-refill";
       refill.textContent = "Refill";
-      refill.disabled = !(
+
+      const canRefill = () =>
         typeof window.aqCanUseRefill === "function" &&
-        window.aqCanUseRefill(id)
-      );
+        window.aqCanUseRefill(id);
+
+      refill.disabled = !canRefill();
 
       refill.title = refill.disabled
-        ? "Purchase this product's Starter Kit first, or verify a previous Starter Kit purchase."
+        ? "Purchase this product's Starter Kit first, or verify a previous purchase."
         : "Add this product's refill pack.";
 
       refill.onclick = () => {
@@ -548,17 +479,18 @@
       });
     }
 
-    // Expose a refresh callback for the cart/OTP script.
+    // Refresh refill availability after cart/OTP changes.
     window.aqRefreshDetailRefill = () => {
       const button = detailView.querySelector(".aq-detail-refill");
-      const id = cards.find(card =>
-        card.dataset.productId &&
-        !detailView.hidden &&
-        detailView.querySelector("h3")?.textContent ===
-          products[card.dataset.productId].name
-      )?.dataset.productId;
+      const title = detailView.querySelector("h3");
 
-      if (!button || !id) return;
+      if (!button || !title || detailView.hidden) return;
+
+      const id = Object.keys(products).find(
+        key => products[key].name === title.textContent
+      );
+
+      if (!id) return;
 
       const allowed =
         typeof window.aqCanUseRefill === "function" &&
@@ -567,9 +499,10 @@
       button.disabled = !allowed;
       button.title = allowed
         ? "Add this product's refill pack."
-        : "Purchase this product's Starter Kit first, or verify a previous Starter Kit purchase.";
+        : "Purchase this product's Starter Kit first, or verify a previous purchase.";
     };
 
+    // Open product details from a product card.
     cards.forEach(card => {
       const open = () => showProduct(card.dataset.productId);
 
@@ -586,44 +519,19 @@
       });
     });
 
-
     back.addEventListener("click", showAllCategories);
 
-// AQUENIX LOGO: ALWAYS RETURN TO THE REAL HOMEPAGE
-const brandLink = document.querySelector("header .brand");
+    // AQUENIX logo returns to homepage categories.
+    const brandLink = document.querySelector("header .brand");
 
-if (brandLink) {
-  brandLink.addEventListener("click", event => {
-    event.preventDefault();
+    if (brandLink) {
+      brandLink.addEventListener("click", event => {
+        event.preventDefault();
+        showAllCategories();
+      });
+    }
 
-    // Restore homepage category screen
-    categoryGrid.hidden = false;
-    listingView.hidden = true;
-    detailView.hidden = true;
-    list.hidden = true;
-
-    // Hide all individual product cards
-    cards.forEach(card => {
-      card.hidden = true;
-    });
-
-    // Update the page address
-    window.history.replaceState(
-      null,
-      "",
-      window.location.pathname +
-      window.location.search +
-      "#home"
-    );
-
-    // Scroll to the actual homepage top
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-  });
-}
-
+    // Search within the selected category.
     search.addEventListener("input", () => {
       const query = search.value.trim().toLowerCase();
 
@@ -636,7 +544,6 @@ if (brandLink) {
 
     showAllCategories();
   }
-
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", start);
