@@ -1,6 +1,7 @@
 
 /* AQUENIX STOREFRONT
-   Dedicated category and product screens
+   Full-screen category and product navigation
+   Home button on every product detail page
    One-step Back navigation
    Browser Back button support
    Existing cart and OTP integration preserved
@@ -48,49 +49,17 @@
   };
 
   const categories = [
-    {
-      name: "Personal Care",
-      image: "assets/personal-care.jpg",
-      note: "1 product",
-      active: true
-    },
-    {
-      name: "Home Care",
-      image: "assets/home-surface-care.jpg",
-      note: "4 products",
-      active: true
-    },
-    {
-      name: "Kitchen Care",
-      image: "assets/dish-care.jpg",
-      note: "Coming soon",
-      active: false
-    },
-    {
-      name: "Laundry Care",
-      image: "assets/laundry-fabric-care.jpg",
-      note: "Coming soon",
-      active: false
-    },
-    {
-      name: "Air Care",
-      image: "assets/air-odour-care.jpg",
-      note: "Coming soon",
-      active: false
-    },
-    {
-      name: "Vehicle Care",
-      image: "assets/vehicle-care.jpg",
-      note: "Coming soon",
-      active: false
-    }
+    { name: "Personal Care", image: "assets/personal-care.jpg", note: "1 product", active: true },
+    { name: "Home Care", image: "assets/home-surface-care.jpg", note: "4 products", active: true },
+    { name: "Kitchen Care", image: "assets/dish-care.jpg", note: "Coming soon", active: false },
+    { name: "Laundry Care", image: "assets/laundry-fabric-care.jpg", note: "Coming soon", active: false },
+    { name: "Air Care", image: "assets/air-odour-care.jpg", note: "Coming soon", active: false },
+    { name: "Vehicle Care", image: "assets/vehicle-care.jpg", note: "Coming soon", active: false }
   ];
 
   const style = document.createElement("style");
 
   style.textContent = `
-    /* Focused shopping experience */
-
     body.aq-shopping-mode main > section:not(#products),
     body.aq-shopping-mode .proof,
     body.aq-shopping-mode footer {
@@ -182,9 +151,15 @@
       color:#687a74;
     }
 
-    /* Navigation */
+    .aq-navigation {
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin:0 0 20px;
+    }
 
-    .aq-back {
+    .aq-back,
+    .aq-home-button {
       display:inline-block;
       padding:11px 19px;
       border:1px solid #173c36;
@@ -194,11 +169,21 @@
       font-size:14px;
       font-weight:700;
       cursor:pointer;
-      margin:0 0 20px;
     }
 
-    .aq-back:hover {
+    .aq-back:hover,
+    .aq-home-button:hover {
       background:#eaf3f0;
+    }
+
+    .aq-home-button {
+      background:#153d35;
+      color:white;
+    }
+
+    .aq-home-button:hover {
+      background:#087f75;
+      color:white;
     }
 
     .aq-store-title {
@@ -223,8 +208,6 @@
       background:white;
     }
 
-    /* Category product cards */
-
     .products {
       display:grid;
       grid-template-columns:repeat(3,minmax(0,1fr));
@@ -246,8 +229,6 @@
     .products .aq-product-actions {
       display:none !important;
     }
-
-    /* Dedicated product detail screen */
 
     .aq-detail {
       width:100%;
@@ -553,10 +534,7 @@
 
       if (item.active) {
         button.addEventListener("click", () => {
-          navigate({
-            view: "category",
-            category: item.name
-          });
+          navigate({ view: "category", category: item.name });
         });
       }
 
@@ -565,16 +543,26 @@
 
     section.insertBefore(categoryGrid, oldNav);
 
-    // Separate category page
+    // Category listing screen
 
     const listingView = document.createElement("div");
     listingView.className = "aq-listing";
     listingView.hidden = true;
 
+    const categoryNavigation = document.createElement("div");
+    categoryNavigation.className = "aq-navigation";
+
+    const categoryHome = document.createElement("button");
+    categoryHome.type = "button";
+    categoryHome.className = "aq-home-button";
+    categoryHome.textContent = "⌂ Home";
+
     const categoryBack = document.createElement("button");
     categoryBack.type = "button";
     categoryBack.className = "aq-back";
-    categoryBack.textContent = "← Back to Categories";
+    categoryBack.textContent = "← Back";
+
+    categoryNavigation.append(categoryHome, categoryBack);
 
     const categoryHeading = document.createElement("h2");
     categoryHeading.className = "aq-store-title";
@@ -596,7 +584,7 @@
     noResults.hidden = true;
 
     listingView.append(
-      categoryBack,
+      categoryNavigation,
       categoryHeading,
       categorySubtitle,
       search,
@@ -605,15 +593,13 @@
 
     section.insertBefore(listingView, list);
 
-    // Separate product detail page
+    // Product detail screen
 
     const detailView = document.createElement("div");
     detailView.className = "aq-detail";
     detailView.hidden = true;
 
     section.insertBefore(detailView, list);
-
-    // Show homepage
 
     function showHome() {
       document.body.classList.add("aq-shopping-mode");
@@ -630,8 +616,6 @@
 
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-
-    // Show selected category only
 
     function showCategory(name) {
       document.body.classList.add("aq-shopping-mode");
@@ -657,8 +641,6 @@
 
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-
-    // Show one selected product in a dedicated screen
 
     function showProduct(id) {
       const item = products[id];
@@ -690,14 +672,28 @@
       const info = document.createElement("div");
       info.className = "aq-detail-info";
 
+      // Home and Back buttons appear on every product detail page
+
+      const navigation = document.createElement("div");
+      navigation.className = "aq-navigation";
+
+      const homeButton = document.createElement("button");
+      homeButton.type = "button";
+      homeButton.className = "aq-home-button";
+      homeButton.textContent = "⌂ Home";
+
+      homeButton.addEventListener("click", () => {
+        navigate({ view: "home" });
+      });
+
       const backButton = document.createElement("button");
       backButton.type = "button";
       backButton.className = "aq-back";
-      backButton.textContent = "← Back to " + item.category;
+      backButton.textContent = "← Back";
 
-      backButton.addEventListener("click", () => {
-        goBack();
-      });
+      backButton.addEventListener("click", goBack);
+
+      navigation.append(homeButton, backButton);
 
       const category = document.createElement("span");
       category.className = "aq-detail-category";
@@ -763,7 +759,7 @@
       actions.append(starter, refill);
 
       info.append(
-        backButton,
+        navigation,
         category,
         title,
         description,
@@ -779,7 +775,7 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    // Keep refill button updated after cart and OTP activity
+    // Update refill availability after cart or OTP activity
 
     window.aqRefreshDetailRefill = () => {
       const button = detailView.querySelector(".aq-detail-refill");
@@ -803,7 +799,7 @@
         : "Purchase this product's Starter Kit first, or verify a previous purchase.";
     };
 
-    // Navigation history
+    // Browser and website navigation
 
     function renderRoute(route) {
       if (!route || route.view === "home") {
@@ -858,7 +854,7 @@
       }
     });
 
-    // Product card click
+    // Product card navigation
 
     cards.forEach(card => {
       const open = () => {
@@ -882,9 +878,13 @@
       });
     });
 
+    categoryHome.addEventListener("click", () => {
+      navigate({ view: "home" });
+    });
+
     categoryBack.addEventListener("click", goBack);
 
-    // Search inside the selected category
+    // Search within the selected category
 
     search.addEventListener("input", () => {
       const query = search.value.trim().toLowerCase();
@@ -918,7 +918,7 @@
       });
     }
 
-    // Start at homepage or restore an existing route
+    // Start at homepage or restore existing route
 
     if (history.state?.aqRoute) {
       renderRoute(history.state);
