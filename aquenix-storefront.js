@@ -586,7 +586,43 @@
       });
     });
 
+
     back.addEventListener("click", showAllCategories);
+
+// AQUENIX LOGO: ALWAYS RETURN TO THE REAL HOMEPAGE
+const brandLink = document.querySelector("header .brand");
+
+if (brandLink) {
+  brandLink.addEventListener("click", event => {
+    event.preventDefault();
+
+    // Restore homepage category screen
+    categoryGrid.hidden = false;
+    listingView.hidden = true;
+    detailView.hidden = true;
+    list.hidden = true;
+
+    // Hide all individual product cards
+    cards.forEach(card => {
+      card.hidden = true;
+    });
+
+    // Update the page address
+    window.history.replaceState(
+      null,
+      "",
+      window.location.pathname +
+      window.location.search +
+      "#home"
+    );
+
+    // Scroll to the actual homepage top
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  });
+}
 
     search.addEventListener("input", () => {
       const query = search.value.trim().toLowerCase();
@@ -600,6 +636,7 @@
 
     showAllCategories();
   }
+
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", start);
