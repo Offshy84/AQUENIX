@@ -1,7 +1,7 @@
 
 /* =====================================================
-   AQUENIX CART + CUSTOMER VERIFICATION
-   Demo checkout only — no live payments
+   AQUENIX CART + HOMEPAGE CUSTOMER IDENTIFICATION
+   Test branch only. Demo checkout — no live payments.
    ===================================================== */
 
 (function () {
@@ -28,6 +28,11 @@
     "15": { name: "Vehicle Cleaner", price: 199 }
   };
 
+  const LOCKED_MESSAGE =
+    "Pehle Starter Kit se Suru Kare, Product aapke mutabik kaam kr rha he ki nahi vo dekhe fir refill apply kare, Dhanyawad ";
+
+  const STORAGE_KEY = "aquenix_customer_lookup_v1";
+
   let cart = [];
   let verified = false;
   let sessionToken = "";
@@ -39,9 +44,10 @@
   let otpSent = false;
   let registrationDetails = null;
   let busy = false;
+  let toastTimer = null;
 
   // ---------------------------------------------------
-  // GOOGLE APPS SCRIPT JSONP CONNECTION
+  // JSONP CONNECTION
   // ---------------------------------------------------
 
   function jsonp(action, data) {
@@ -106,6 +112,392 @@
     });
   }
 
+  // ---------------------------------------------------
+  // CUSTOMER LOOKUP STATE
+  // ---------------------------------------------------
+
+  function cleanPurchaseFlags(flags) {
+    const clean = {};
+
+    Object.keys(PRODUCTS).forEach(function (id) {
+      clean[id] = !!(flags && flags[id] === true);
+    });
+
+    return clean;
+  }
+
+  function saveLookupSession() {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        mobile: customerMobile,
+        status: customerStatus,
+        purchases: starterKitPurchases
+      }));
+    } catch (error) {
+      // The current page session still works if storage is unavailable.
+    }
+  }
+
+  function restoreLookupSession() {
+    try {
+      const saved = JSON.parse(
+        sessionStorage.getItem(STORAGE_KEY) || "null"
+      );
+
+      if (!saved || !/^[6-9][0-9]{9}$/.test(saved.mobile || "")) {
+        return;
+      }
+
+      customerMobile = saved.mobile;
+      customerStatus = saved.status || "";
+      starterKitPurchases = cleanPurchaseFlags(saved.purchases);
+
+      updateWelcomePanel();
+    } catch (error) {
+      // Ignore invalid or unavailable session storage.
+    }
+  }
+
+  async function lookupHomepageCustomer() {
+    const input = document.getElementById("aq-home-mobile");
+    const message = document.getElementById("aq-home-message");
+    const button = document.getElementById("aq-home-identify");
+
+    if (!input || !message || busy) return;
+
+    const mobile = input.value.trim();
+
+    if (!/^[6-9][0-9]{9}$/.test(mobile)) {
+      message.textContent = "Enter a valid 10-digit Indian mobile number.";
+      message.className = "aq-home-message aq-error";
+      return;
+    }
+
+    busy = true;
+    button.disabled = true;
+    message.textContent = "Checking your AQUENIX account...";
+    message.className = "aq-home-message";
+
+    try {
+      const response = await jsonp("checkCustomer", {
+        mobile: mobile
+      });
+
+      customerMobile = mobile;
+      customerStatus = response.existing ? "existing" : "new";
+
+      starterKitPurchases = response.existing
+        ? cleanPurchaseFlags(response.starterKitPurchases)
+        : cleanPurchaseFlags({});
+
+      saveLookupSession();
+      updateWelcomePanel();
+      refreshRefillAccess();
+
+      message.textContent = response.existing
+        ? "Welcome back! Your eligible refills are now available."
+        : "Welcome to AQUENIX! Please choose a Starter Kit first.";
+
+      message.className = "aq-home-message aq-success";
+
+    } catch (error) {
+      message.textContent = error.message;
+      message.className = "aq-home-message aq-error";
+    } finally {
+      busy = false;
+      button.disabled = false;
+    }
+  }
+
+  function updateWelcomePanel() {
+    const status = document.getElementById("aq-home-status");
+    const input = document.getElementById("aq-home-mobile");
+    const message = document.getElementById("aq-home-message");
+
+    if (!status) return;
+
+    if (customerMobile && customerStatus === "existing") {
+      status.textContent =
+        "Welcome back! Your matching purchased Starter Kit refills are unlocked.";
+
+      if (input) input.value = customerMobile;
+
+    } else if (customerMobile && customerStatus === "new") {
+      status.textContent =
+        "Welcome to AQUENIX! Starter Kits are available. Refills unlock after a matching Starter Kit purchase.";
+
+      if (input) input.value = customerMobile;
+
+    } else {
+      status.textContent =
+        "Enter your mobile number to check your AQUENIX refill access.";
+    }
+
+    if (message && !message.textContent) {
+      message.textContent = "";
+    }
+  }
+
+  function openWelcomePanel() {
+    const panel = document.getElementById("aq-home-welcome");
+    if (!panel) return;
+
+    panel.hidden = false;
+
+    const input = document.getElementById("aq-home-mobile");
+    if (input) {
+      input.focus();
+      panel.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
+  function closeWelcomePanel() {
+    const panel = document.getElementById("aq-home-welcome");
+    if (panel) panel.hidden = true;
+  }
+
+  // ---------------------------------------------------
+  // WELCOME PANEL ON HOMEPAGE
+  // ---------------------------------------------------
+
+  function createWelcomePanel() {
+    if (document.getElementById("aq-home-welcome")) return;
+
+    const productsSection = document.querySelector("#products .wrap");
+    if (!productsSection) return;
+
+    const panel = document.createElement("div");
+    panel.id = "aq-home-welcome";
+
+    panel.innerHTML = `
+      <div class="aq-home-panel-heading">
+        <div>
+          <strong>Welcome to AQUENIX</strong>
+          <p id="aq-home-status">
+            Enter your mobile number to check your refill access.
+          </p>
+        </div>
+        <button type="button" id="aq-home-dismiss"
+          aria-label="Close welcome panel">×</button>
+      </div>
+
+      <div class="aq-home-panel-controls">
+        <label for="aq-home-mobile">Mobile Number</label>
+        <input id="aq-home-mobile"
+          type="tel"
+          maxlength="10"
+          inputmode="numeric"
+          placeholder="Enter 10-digit mobile number">
+
+        <button type="button" id="aq-home-identify">
+          Check My Refills
+        </button>
+      </div>
+
+      <p id="aq-home-message" class="aq-home-message" role="status"></p>
+
+      <button type="button" id="aq-home-later">
+        Do this later
+      </button>
+    `;
+
+    productsSection.insertBefore(
+      panel,
+      productsSection.firstChild
+    );
+
+    document.getElementById("aq-home-identify")
+      .addEventListener("click", lookupHomepageCustomer);
+
+    document.getElementById("aq-home-mobile")
+      .addEventListener("keydown", function (event) {
+        if (event.key === "Enter") lookupHomepageCustomer();
+      });
+
+    document.getElementById("aq-home-dismiss")
+      .addEventListener("click", closeWelcomePanel);
+
+    document.getElementById("aq-home-later")
+      .addEventListener("click", closeWelcomePanel);
+
+    updateWelcomePanel();
+  }
+
+  function addWelcomeStyles() {
+    if (document.getElementById("aq-home-welcome-styles")) return;
+
+    const style = document.createElement("style");
+    style.id = "aq-home-welcome-styles";
+
+    style.textContent = `
+      #aq-home-welcome {
+        display:block;
+        background:#fff;
+        border:1px solid #dcebe7;
+        border-radius:14px;
+        padding:15px 18px;
+        margin:0 0 22px;
+        box-shadow:0 5px 18px rgba(10,50,42,.06);
+      }
+
+      #aq-home-welcome[hidden] {
+        display:none !important;
+      }
+
+      .aq-home-panel-heading {
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:12px;
+      }
+
+      .aq-home-panel-heading strong {
+        color:#073f3b;
+        font-size:17px;
+      }
+
+      .aq-home-panel-heading p {
+        color:#647772;
+        font-size:13px;
+        margin:3px 0 10px;
+      }
+
+      #aq-home-dismiss {
+        border:0;
+        background:transparent;
+        color:#53645e;
+        font-size:25px;
+        cursor:pointer;
+      }
+
+      .aq-home-panel-controls {
+        display:flex;
+        align-items:center;
+        flex-wrap:wrap;
+        gap:9px;
+      }
+
+      .aq-home-panel-controls label {
+        width:100%;
+        font-size:12px;
+        font-weight:700;
+        color:#36564e;
+      }
+
+      #aq-home-mobile {
+        flex:1;
+        min-width:190px;
+        padding:11px 13px;
+        border:1px solid #cbd9d5;
+        border-radius:7px;
+        font-size:14px;
+      }
+
+      #aq-home-identify {
+        padding:11px 16px;
+        border:0;
+        border-radius:7px;
+        background:#087f75;
+        color:white;
+        font-weight:700;
+        cursor:pointer;
+      }
+
+      #aq-home-identify:disabled {
+        opacity:.6;
+        cursor:wait;
+      }
+
+      .aq-home-message {
+        min-height:0;
+        margin:7px 0 0;
+        font-size:13px;
+      }
+
+      .aq-home-message:empty {
+        display:none;
+      }
+
+      .aq-home-message.aq-success {
+        color:#087443;
+      }
+
+      .aq-home-message.aq-error {
+        color:#b42318;
+      }
+
+      #aq-home-later {
+        margin-top:7px;
+        padding:3px 0;
+        border:0;
+        background:transparent;
+        color:#647772;
+        font-size:12px;
+        text-decoration:underline;
+        cursor:pointer;
+      }
+
+      #aq-locked-toast {
+        position:fixed;
+        left:50%;
+        bottom:25px;
+        transform:translateX(-50%);
+        z-index:1000002;
+        width:min(560px,calc(100% - 28px));
+        padding:15px 18px;
+        background:#073f3b;
+        color:#fff;
+        border-radius:10px;
+        box-shadow:0 8px 30px rgba(0,0,0,.25);
+        font-size:14px;
+        line-height:1.6;
+        text-align:center;
+        display:none;
+      }
+
+      #aq-locked-toast.aq-toast-visible {
+        display:block;
+      }
+
+      @media(max-width:520px) {
+        .aq-home-panel-controls {
+          align-items:stretch;
+          flex-direction:column;
+        }
+
+        #aq-home-mobile,
+        #aq-home-identify {
+          width:100%;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  // ---------------------------------------------------
+  // LOCKED REFILL MESSAGE
+  // ---------------------------------------------------
+
+  function showLockedMessage() {
+    let toast = document.getElementById("aq-locked-toast");
+
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "aq-locked-toast";
+      toast.setAttribute("role", "status");
+      document.body.appendChild(toast);
+    }
+
+    toast.textContent = LOCKED_MESSAGE;
+    toast.classList.add("aq-toast-visible");
+
+    if (toastTimer) clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(function () {
+      toast.classList.remove("aq-toast-visible");
+    }, 4000);
+  }
 
   // ---------------------------------------------------
   // CART FUNCTIONS
@@ -128,6 +520,25 @@
     }, 0);
   }
 
+  function hasStarterInCart(id) {
+    return cart.some(function (item) {
+      return item.id === String(id) && item.kit === "starter";
+    });
+  }
+
+  function canUseRefill(id) {
+    id = String(id);
+
+    return starterKitPurchases[id] === true ||
+      hasStarterInCart(id);
+  }
+
+  function refreshRefillAccess() {
+    if (typeof window.aqRefreshDetailRefill === "function") {
+      window.aqRefreshDetailRefill();
+    }
+  }
+
   function addProduct(id, kit) {
     id = String(id);
     kit = String(kit || "starter").toLowerCase();
@@ -142,10 +553,8 @@
     }
 
     if (kit === "refill" && !canUseRefill(id)) {
-      alert(
-        "Please verify your customer account and confirm your Starter Kit purchase before adding this refill."
-      );
-      openCart();
+      showLockedMessage();
+      openWelcomePanel();
       return;
     }
 
@@ -164,6 +573,7 @@
     }
 
     renderCart();
+    refreshRefillAccess();
     openCart();
   }
 
@@ -185,6 +595,7 @@
     if (item.qty > 99) item.qty = 99;
 
     renderCart();
+    refreshRefillAccess();
   }
 
   function removeItem(id, kit) {
@@ -193,6 +604,7 @@
     });
 
     renderCart();
+    refreshRefillAccess();
   }
 
   function clearCart() {
@@ -202,20 +614,14 @@
 
     cart = [];
     renderCart();
+    refreshRefillAccess();
   }
 
-  function canUseRefill(id) {
-    return verified &&
-      starterKitPurchases[String(id)] === true;
-  }
-
-  // Public functions used by AQUENIX storefront.
+  // Public storefront functions.
   window.aqAddProduct = addProduct;
   window.aqCanUseRefill = canUseRefill;
-  window.aqRefreshDetailRefill = function () {
-    renderCart();
-  };
-
+  window.aqOpenWelcomePanel = openWelcomePanel;
+  window.aqRefreshDetailRefill = refreshRefillAccess;
 
   // ---------------------------------------------------
   // CART PANEL
@@ -280,12 +686,11 @@
     );
   }
 
-
   // ---------------------------------------------------
   // CART STYLES
   // ---------------------------------------------------
 
-  function addStyles() {
+  function addCartStyles() {
     if (document.getElementById("aq-cart-styles")) return;
 
     const style = document.createElement("style");
@@ -359,6 +764,7 @@
         display:flex;
         justify-content:space-between;
         align-items:center;
+        gap:8px;
       }
 
       .aq-quantity button {
@@ -443,18 +849,9 @@
         line-height:1.5;
       }
 
-      .aq-success {
-        color:#087443;
-      }
-
-      .aq-error {
-        color:#b42318;
-      }
-
-      .aq-muted {
-        color:#666;
-        font-size:13px;
-      }
+      .aq-success { color:#087443; }
+      .aq-error { color:#b42318; }
+      .aq-muted { color:#666; font-size:13px; }
 
       @media(max-width:480px) {
         .aq-cart-box {
@@ -466,7 +863,6 @@
 
     document.head.appendChild(style);
   }
-
 
   // ---------------------------------------------------
   // CART DISPLAY
@@ -538,8 +934,9 @@
         if (action === "remove") removeItem(id, kit);
       });
     });
-  }
 
+    updateCartCount();
+  }
 
   function openCart() {
     createPanel();
@@ -574,9 +971,9 @@
     });
   }
 
-
   // ---------------------------------------------------
-  // CUSTOMER IDENTIFICATION
+  // CHECKOUT CUSTOMER IDENTIFICATION
+  // Existing email OTP flow is preserved.
   // ---------------------------------------------------
 
   function beginCustomerProcess() {
@@ -595,7 +992,6 @@
     showCustomerForm();
   }
 
-
   function showCustomerForm() {
     const area = document.getElementById("aq-customer-area");
 
@@ -604,7 +1000,7 @@
         <h3>Customer Details</h3>
 
         <p class="aq-muted">
-          Enter your mobile number to continue.
+          Enter your mobile number to continue checkout.
         </p>
 
         <label for="aq-mobile">Mobile Number</label>
@@ -626,7 +1022,6 @@
     document.getElementById("aq-identify")
       .addEventListener("click", identifyCustomer);
   }
-
 
   async function identifyCustomer() {
     if (busy) return;
@@ -671,7 +1066,6 @@
     }
   }
 
-
   // ---------------------------------------------------
   // EXISTING CUSTOMER
   // ---------------------------------------------------
@@ -699,7 +1093,6 @@
     document.getElementById("aq-send-otp")
       .addEventListener("click", sendCustomerOtp);
   }
-
 
   // ---------------------------------------------------
   // NEW CUSTOMER REGISTRATION
@@ -765,7 +1158,6 @@
       });
   }
 
-
   // ---------------------------------------------------
   // SEND OTP
   // ---------------------------------------------------
@@ -809,7 +1201,6 @@
     }
   }
 
-
   // ---------------------------------------------------
   // OTP FORM
   // ---------------------------------------------------
@@ -840,7 +1231,6 @@
     document.getElementById("aq-verify-otp")
       .addEventListener("click", verifyCustomerOtp);
   }
-
 
   // ---------------------------------------------------
   // VERIFY OTP
@@ -873,7 +1263,13 @@
       verified = true;
       sessionToken = response.sessionToken;
       customerName = response.customerName || "";
-      starterKitPurchases = response.starterKitPurchases || {};
+      starterKitPurchases = cleanPurchaseFlags(
+        response.starterKitPurchases || {}
+      );
+
+      customerStatus = response.existing ? "existing" : "new";
+      saveLookupSession();
+      updateWelcomePanel();
 
       document.getElementById("aq-customer-area").innerHTML = `
         <div class="aq-form">
@@ -889,6 +1285,7 @@
 
       showMessage("Email verified successfully.", false);
       renderCart();
+      refreshRefillAccess();
 
     } catch (error) {
       showMessage(error.message, true);
@@ -896,7 +1293,6 @@
       busy = false;
     }
   }
-
 
   // ---------------------------------------------------
   // SAVE DEMO CHECKOUT
@@ -965,6 +1361,7 @@
 
       cart = [];
       renderCart();
+      refreshRefillAccess();
 
       document.getElementById("aq-checkout").disabled = true;
       document.getElementById("aq-checkout").textContent =
@@ -976,7 +1373,6 @@
       busy = false;
     }
   }
-
 
   // ---------------------------------------------------
   // CART BUTTON IN WEBSITE NAVIGATION
@@ -1007,29 +1403,21 @@
     }
   }
 
-
   function updateCartCount() {
     const count = document.getElementById("aq-cart-count");
     if (count) count.textContent = getCartCount();
   }
-
-
-  // Keep count updated whenever the cart changes.
-  const originalRenderCart = renderCart;
-
-  renderCart = function () {
-    originalRenderCart();
-    updateCartCount();
-  };
-
 
   // ---------------------------------------------------
   // INITIALISE
   // ---------------------------------------------------
 
   function init() {
-    addStyles();
+    addWelcomeStyles();
+    addCartStyles();
     createPanel();
+    createWelcomePanel();
+    restoreLookupSession();
     addCartButton();
     renderCart();
   }
