@@ -1,955 +1,1043 @@
 
-(() => {
-  // AQUENIX WEBSITE
-  // Category navigation + product-specific Starter Kit / Refill
-  // Cart + Email OTP + product-specific refill eligibility
-  // Google Sheet checkout logging
-  // Demo checkout only. Live payments disabled.
+/* =====================================================
+   AQUENIX CART + CUSTOMER VERIFICATION
+   Demo checkout only — no live payments
+   ===================================================== */
 
-  const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbyTr1d5oHLsrjDNqnPd7C5WYkkS5p1m0H13VJfgjTW1_mc4SgS9CUFEEcHiTRZZ-MNp/exec";
+(function () {
+  "use strict";
 
-  // PRODUCT CATALOGUE
-  const products = {
-    "01": ["Foaming Handwash", "Personal Care"],
-    "02": ["Floor Cleaner", "Home Care"],
-    "03": ["Toilet Cleaner", "Home Care"],
-    "04": ["Bathroom Cleaner", "Home Care"],
-    "05": ["Glass & Mirror Cleaner", "Home Care"],
-    "06": ["Kitchen Cleaner", "Kitchen Care"],
-    "07": ["Multipurpose Cleaner", "Home Care"],
-    "08": ["Dishwash", "Kitchen Care"],
-    "09": ["Tap/Limescale Cleaner", "Home Care"],
-    "10": ["Laundry Detergent", "Laundry Care"],
-    "11": ["Air Freshener", "Air Care"],
-    "12": ["Odour Eliminator", "Air Care"],
-    "13": ["Washing-machine Descaler/Cleaner", "Laundry Care"],
-    "14": ["Stain Remover", "Laundry Care"],
-    "15": ["Car/Vehicle Cleaner", "Vehicle Care"]
+  const SHEET_ENDPOINT =
+    "https://script.google.com/macros/s/AKfycbyTr1d5oHLsrjDNqnPd7C5WYkkS5p1m0H13VJfgjTW1_mc4SgS9CUFEEcHiTRZZ-MNp/exec";
+
+  const PRODUCTS = {
+    "01": { name: "Foaming Handwash", price: 149 },
+    "02": { name: "Floor Cleaner", price: 179 },
+    "03": { name: "Toilet Cleaner", price: 179 },
+    "04": { name: "Bathroom Cleaner", price: 179 },
+    "05": { name: "Glass & Mirror Cleaner", price: 169 },
+    "06": { name: "Kitchen Cleaner", price: 179 },
+    "07": { name: "Multi-Surface Cleaner", price: 189 },
+    "08": { name: "Dishwash", price: 169 },
+    "09": { name: "Tap/Limescale Cleaner", price: 199 },
+    "10": { name: "Laundry Detergent", price: 229 },
+    "11": { name: "Air Freshener", price: 189 },
+    "12": { name: "Odour Eliminator", price: 199 },
+    "13": { name: "Washing-machine Cleaner", price: 219 },
+    "14": { name: "Stain Remover", price: 179 },
+    "15": { name: "Vehicle Cleaner", price: 199 }
   };
 
-  const categories = [
-    "All Products",
-    "Personal Care",
-    "Home Care",
-    "Kitchen Care",
-    "Laundry Care",
-    "Air Care",
-    "Vehicle Care"
-  ];
-
-  // DEMONSTRATION PRICES - NOT FINAL SELLING PRICES
-  const prices = {
-    "01":149,"02":179,"03":179,"04":179,"05":169,
-    "06":179,"07":189,"08":169,"09":199,"10":229,
-    "11":189,"12":199,"13":219,"14":179,"15":199
-  };
-
-  const cart = {};
-
+  let cart = [];
   let verified = false;
   let sessionToken = "";
+  let customerMobile = "";
+  let customerName = "";
+  let customerType = "Household";
   let starterKitPurchases = {};
+  let customerStatus = "";
   let otpSent = false;
-  let requestData = null;
+  let registrationDetails = null;
+  let busy = false;
 
-  // REFILL ELIGIBILITY
-  function hasHistoricalStarterKit(id) {
-    const value = starterKitPurchases[id];
-
-    return value === true ||
-      value === 1 ||
-      String(value).toLowerCase() === "true" ||
-      String(value) === "1";
-  }
-
-  function hasStarterKitInCart(id) {
-    const item = cart[id + "-starter"];
-    return Boolean(item && item.qty > 0);
-  }
-
-  function canUseRefill(id) {
-    return hasStarterKitInCart(id) ||
-      (verified && hasHistoricalStarterKit(id));
-  }
-
-  function removeIneligibleRefills() {
-    Object.keys(cart).forEach(key => {
-      const item = cart[key];
-
-      if (item.kit === "refill" && !canUseRefill(item.id)) {
-        delete cart[key];
-      }
-    });
-  }
-
+  // ---------------------------------------------------
   // GOOGLE APPS SCRIPT JSONP CONNECTION
+  // ---------------------------------------------------
+
   function jsonp(action, data) {
-    return new Promise((resolve, reject) => {
-      const callback = "aqCallback" + Date.now() +
-        Math.floor(Math.random() * 10000);
+    return new Promise(function (resolve, reject) {
+      const callbackName =
+        "aqCallback_" + Date.now() + "_" +
+        Math.floor(Math.random() * 100000);
 
       const script = document.createElement("script");
+      const params = new URLSearchParams();
 
-      const params = new URLSearchParams({
-        action,
-        ...data,
-        callback
+      params.set("action", action);
+      params.set("callback", callbackName);
+
+      Object.keys(data || {}).forEach(function (key) {
+        const value = data[key];
+        params.set(
+          key,
+          typeof value === "string" ? value : JSON.stringify(value)
+        );
       });
 
-      const timeout = setTimeout(() => {
-        cleanup();
-        reject(new Error("Request timed out. Please try again."));
-      }, 20000);
+      let finished = false;
 
-      function cleanup() {
+      const timeout = setTimeout(function () {
+        finish();
+        reject(new Error("Server did not respond. Please try again."));
+      }, 25000);
+
+      function finish() {
+        if (finished) return;
+        finished = true;
         clearTimeout(timeout);
-        delete window[callback];
-        script.remove();
+        delete window[callbackName];
+        if (script.parentNode) script.parentNode.removeChild(script);
       }
 
-      window[callback] = response => {
-        cleanup();
+      window[callbackName] = function (response) {
+        finish();
+
+        if (!response || response.success !== true) {
+          reject(new Error(
+            response && response.message
+              ? response.message
+              : "Request failed."
+          ));
+          return;
+        }
+
         resolve(response);
       };
 
-      script.onerror = () => {
-        cleanup();
-        reject(new Error("Could not connect. Please try again."));
+      script.onerror = function () {
+        finish();
+        reject(new Error(
+          "Unable to connect to AQUENIX server. Please try again."
+        ));
       };
 
       script.src = SHEET_ENDPOINT + "?" + params.toString();
-      document.head.appendChild(script);
+      document.body.appendChild(script);
     });
   }
 
-  // WEBSITE STYLING
-  const style = document.createElement("style");
 
-  style.textContent = `
-    #aq-category-area {
-      width:100%;
-      margin:20px 0;
-    }
+  // ---------------------------------------------------
+  // CART FUNCTIONS
+  // ---------------------------------------------------
 
-    #aq-category-heading {
-      color:#153d35;
-      font-size:22px;
-      font-weight:700;
-      margin-bottom:12px;
-    }
-
-    #aq-category-nav {
-      display:flex;
-      flex-wrap:wrap;
-      gap:9px;
-      margin:12px 0 20px;
-    }
-
-    .aq-category-btn {
-      background:white;
-      color:#153d35;
-      border:1px solid #153d35;
-      border-radius:22px;
-      padding:9px 16px;
-      cursor:pointer;
-      font-size:14px;
-      font-weight:600;
-    }
-
-    .aq-category-btn.active {
-      background:#153d35;
-      color:white;
-    }
-
-    .aq-product-category {
-      display:inline-block;
-      background:#e8f1ed;
-      color:#153d35;
-      padding:5px 10px;
-      border-radius:15px;
-      font-size:12px;
-      margin:5px 0;
-    }
-
-    /* Hide Starter Kit / Refill on product listing cards */
-    .products .aq-product-actions {
-      display:none !important;
-    }
-
-    .aq-product-actions {
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-top:10px;
-    }
-
-    .aq-product-btn {
-      flex:1;
-      min-width:115px;
-      padding:10px 12px;
-      border-radius:8px;
-      border:1px solid #153d35;
-      cursor:pointer;
-      font-size:13px;
-      font-weight:650;
-    }
-
-    .aq-starter-btn {
-      background:#153d35;
-      color:white;
-    }
-
-    .aq-refill-btn {
-      background:white;
-      color:#153d35;
-    }
-
-    .aq-refill-btn:disabled {
-      opacity:0.45;
-      cursor:not-allowed;
-      background:#eee;
-      color:#666;
-      border-color:#aaa;
-    }
-
-    #aq-cart-btn {
-      background:#153d35;
-      color:white;
-      border:0;
-      padding:10px 16px;
-      border-radius:8px;
-      cursor:pointer;
-    }
-
-    #aq-cart-panel {
-      display:none;
-      position:fixed;
-      inset:0;
-      background:#0009;
-      z-index:99999;
-      align-items:center;
-      justify-content:center;
-      padding:12px;
-    }
-
-    #aq-cart-box {
-      background:white;
-      color:#222;
-      width:100%;
-      max-width:560px;
-      max-height:92vh;
-      overflow:auto;
-      border-radius:16px;
-      padding:20px;
-      font:14px/1.5 system-ui,Arial;
-    }
-
-    #aq-cart-box button {
-      padding:8px 12px;
-      margin:3px;
-      cursor:pointer;
-    }
-
-    .aq-item {
-      border-bottom:1px solid #ddd;
-      padding:12px 0;
-    }
-
-    .aq-action {
-      background:#153d35;
-      color:white;
-      border:0;
-      border-radius:7px;
-    }
-
-    #aq-cart-box input {
-      padding:10px;
-      width:100%;
-      margin:5px 0 10px;
-      border:1px solid #ccd6dc;
-      border-radius:7px;
-      box-sizing:border-box;
-    }
-
-    #aq-cart-box label {
-      font-weight:650;
-      display:block;
-      margin-top:5px;
-    }
-
-    .aq-note {
-      font-size:12px;
-      color:#6b7780;
-    }
-
-    .aq-section {
-      border-top:1px solid #e5e9eb;
-      margin-top:14px;
-      padding-top:12px;
-    }
-
-    .aq-error {
-      color:#a32626;
-      font-size:13px;
-    }
-
-    .aq-success {
-      color:#176b3b;
-      font-size:13px;
-    }
-
-    @media(max-width:600px) {
-      #aq-category-heading {
-        font-size:19px;
-      }
-
-      .aq-category-btn {
-        padding:8px 12px;
-        font-size:13px;
-      }
-
-      .aq-product-btn {
-        min-width:105px;
-        font-size:12px;
-      }
-    }
-  `;
-
-  document.head.appendChild(style);
-
-  // FIND WEBSITE SECTIONS
-  const nav = document.querySelector(".nav") ||
-    document.querySelector("header");
-
-  const productsContainer = document.querySelector(".products");
-
-  if (!nav) {
-    return console.warn("AQUENIX navigation not found");
+  function getProduct(id) {
+    return PRODUCTS[String(id)];
   }
 
-  if (!productsContainer) {
-    return console.warn("AQUENIX products section not found");
+  function getCartTotal() {
+    return cart.reduce(function (total, item) {
+      const product = getProduct(item.id);
+      return total + (product.price * item.qty);
+    }, 0);
   }
 
-  // FIND EXISTING PRODUCT LIST ITEMS
-  const productItems = [
-    ...document.querySelectorAll(".products li")
-  ];
-
-  // CATEGORY NAVIGATION
-  const categoryArea = document.createElement("div");
-  categoryArea.id = "aq-category-area";
-
-  const categoryHeading = document.createElement("div");
-  categoryHeading.id = "aq-category-heading";
-  categoryHeading.textContent = "Shop by Category";
-
-  const categoryNav = document.createElement("div");
-  categoryNav.id = "aq-category-nav";
-
-  categoryArea.append(categoryHeading, categoryNav);
-
-  productsContainer.parentNode.insertBefore(
-    categoryArea,
-    productsContainer
-  );
-
-  function filterProducts(selectedCategory) {
-    productItems.forEach(li => {
-      const match = li.innerText.match(/\b(0[1-9]|1[0-5])\b/);
-      if (!match) return;
-
-      const id = match[1];
-      const category = products[id][1];
-
-      li.hidden = selectedCategory !== "All Products" &&
-        category !== selectedCategory;
-    });
-
-    categoryNav.querySelectorAll("button").forEach(button => {
-      const active = button.dataset.category === selectedCategory;
-
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
+  function getCartCount() {
+    return cart.reduce(function (total, item) {
+      return total + item.qty;
+    }, 0);
   }
 
-  categories.forEach(category => {
-    const button = document.createElement("button");
-
-    button.type = "button";
-    button.className = "aq-category-btn";
-    button.textContent = category;
-    button.dataset.category = category;
-
-    button.onclick = () => filterProducts(category);
-
-    categoryNav.appendChild(button);
-  });
-
-  filterProducts("All Products");
-
-  // CART PANEL
-  const panel = document.createElement("div");
-  panel.id = "aq-cart-panel";
-
-  panel.innerHTML = `
-    <div id="aq-cart-box">
-      <button id="aq-close" style="float:right">✕</button>
-      <h2>Your AQUENIX Cart</h2>
-
-      <p class="aq-note">
-        <b>Demo only:</b> prices are illustrative, not actual selling prices.
-      </p>
-
-      <div id="aq-items"></div>
-      <h3 id="aq-total">Demo total: ₹0</h3>
-      <button id="aq-clear">Clear cart</button>
-
-      <div class="aq-section">
-        <h3>Customer Verification</h3>
-
-        <p class="aq-note">
-          Enter your mobile number and details. We will send an OTP
-          to your email address. Existing customers receive the OTP
-          at their registered email address.
-        </p>
-
-        <form id="aq-registration">
-          <label>10-digit Indian mobile number *</label>
-          <input id="aq-mobile" inputmode="numeric"
-            pattern="[6-9][0-9]{9}" maxlength="10" required>
-
-          <label>Full name (required for new customers)</label>
-          <input id="aq-name" autocomplete="name">
-
-          <label>Email address (required for new customers)</label>
-          <input id="aq-email" type="email" autocomplete="email">
-
-          <label>City (required for new customers)</label>
-          <input id="aq-city" autocomplete="address-level2">
-
-          <label style="font-weight:400">
-            <input id="aq-whatsapp" type="checkbox" style="width:auto">
-            I agree to receive optional AQUENIX WhatsApp updates.
-          </label>
-
-          <button class="aq-action" id="aq-register" type="submit">
-            Send email OTP
-          </button>
-        </form>
-
-        <div id="aq-otp-area" hidden>
-          <label>Enter 6-digit OTP</label>
-          <input id="aq-otp" inputmode="numeric"
-            maxlength="6" pattern="[0-9]{6}"
-            autocomplete="one-time-code">
-
-          <button class="aq-action" id="aq-verify" type="button">
-            Verify OTP
-          </button>
-        </div>
-
-        <p id="aq-register-status" aria-live="polite"></p>
-        <p id="aq-access-status" class="aq-success"></p>
-      </div>
-
-      <div class="aq-section">
-        <h3>Checkout Preview</h3>
-
-        <p id="aq-preview">
-          Verify your email OTP to unlock the preview.
-        </p>
-
-        <button class="aq-action" id="aq-checkout" disabled>
-          Continue to preview
-        </button>
-
-        <p class="aq-note">
-          Live payments are disabled. No money will be collected.
-        </p>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(panel);
-
-  // ADD PRODUCT TO CART
   function addProduct(id, kit) {
-    const key = id + "-" + kit;
+    id = String(id);
+    kit = String(kit || "starter").toLowerCase();
+
+    if (!getProduct(id)) {
+      alert("Product not found.");
+      return;
+    }
+
+    if (kit !== "starter" && kit !== "refill") {
+      kit = "starter";
+    }
 
     if (kit === "refill" && !canUseRefill(id)) {
       alert(
-        "Refill is not yet available. First add this product's " +
-        "Starter Kit or verify a confirmed past purchase of this exact Starter Kit."
+        "Please verify your customer account and confirm your Starter Kit purchase before adding this refill."
       );
+      openCart();
       return;
     }
 
-    const existing = document.getElementById("aq-quantity-choice");
-    if (existing) existing.remove();
-
-    const chooser = document.createElement("div");
-    chooser.id = "aq-quantity-choice";
-    chooser.className = "aq-section";
-
-    const product = products[id];
-
-    chooser.innerHTML = `
-      <h3>${product[0]}</h3>
-      <p class="aq-note">${product[1]} · Product ${id}</p>
-      <p><b>${kit === "starter" ? "Starter Kit" : "Refill Pack"}</b></p>
-      <p class="aq-note">
-        ${kit === "starter"
-          ? "Reusable bottle/container with matching product tablets."
-          : "Matching product tablets only."}
-      </p>
-      <label>Number of packs</label>
-      <input id="aq-product-qty" type="number"
-        min="1" max="99" value="1">
-      <button class="aq-action" id="aq-confirm-add">
-        Add to Cart
-      </button>
-      <button id="aq-cancel-add">Cancel</button>
-    `;
-
-    document.getElementById("aq-items").prepend(chooser);
-
-    document.getElementById("aq-confirm-add").onclick = () => {
-      const qty = Number(
-        document.getElementById("aq-product-qty").value
-      );
-
-      if (!Number.isInteger(qty) || qty < 1 || qty > 99) {
-        alert("Enter a quantity from 1 to 99.");
-        return;
-      }
-
-      if (kit === "refill" && !canUseRefill(id)) {
-        alert("This product's Starter Kit is required for refill.");
-        return;
-      }
-
-      if (!cart[key]) {
-        cart[key] = { id, kit, qty: 0 };
-      }
-
-      cart[key].qty += qty;
-
-      chooser.remove();
-      update();
-      refreshProductButtons();
-    };
-
-    document.getElementById("aq-cancel-add").onclick =
-      () => chooser.remove();
-
-    panel.style.display = "flex";
-  }
-
-  // CONNECT CART ACTIONS TO PRODUCT DETAILS PAGE
-  window.aqAddProduct = addProduct;
-  window.aqCanUseRefill = canUseRefill;
-
-  // ADD CATEGORY LABELS AND TWO PRODUCT BUTTONS
-  function refreshProductButtons() {
-    productItems.forEach(li => {
-      const match = li.innerText.match(/\b(0[1-9]|1[0-5])\b/);
-      if (!match) return;
-
-      const id = match[1];
-      const product = products[id];
-
-      if (!product) return;
-
-      if (!li.querySelector(".aq-product-category")) {
-        const categoryLabel = document.createElement("span");
-        categoryLabel.className = "aq-product-category";
-        categoryLabel.textContent = product[1];
-        li.appendChild(categoryLabel);
-      }
-
-      let actions = li.querySelector(".aq-product-actions");
-
-      if (!actions) {
-        actions = document.createElement("div");
-        actions.className = "aq-product-actions";
-        li.appendChild(actions);
-      }
-
-      actions.innerHTML = "";
-
-      const starterButton = document.createElement("button");
-      starterButton.type = "button";
-      starterButton.className =
-        "aq-product-btn aq-starter-btn";
-      starterButton.textContent = "Starter Kit";
-
-      starterButton.onclick = () => {
-        addProduct(id, "starter");
-      };
-
-      const refillButton = document.createElement("button");
-      refillButton.type = "button";
-      refillButton.className =
-        "aq-product-btn aq-refill-btn";
-      refillButton.textContent = "Refill";
-
-      const refillAllowed = canUseRefill(id);
-      refillButton.disabled = !refillAllowed;
-
-      refillButton.title = refillAllowed
-        ? "Add this product's refill pack"
-        : "Add this product's Starter Kit first or verify a previous purchase";
-
-      refillButton.onclick = () => {
-        addProduct(id, "refill");
-      };
-
-      actions.append(starterButton, refillButton);
+    const existing = cart.find(function (item) {
+      return item.id === id && item.kit === kit;
     });
 
-    if (typeof window.aqRefreshDetailRefill === "function") {
-      window.aqRefreshDetailRefill();
+    if (existing) {
+      existing.qty = Math.min(existing.qty + 1, 99);
+    } else {
+      cart.push({
+        id: id,
+        kit: kit,
+        qty: 1
+      });
     }
+
+    renderCart();
+    openCart();
   }
 
-  refreshProductButtons();
+  function changeQuantity(id, kit, change) {
+    const item = cart.find(function (entry) {
+      return entry.id === id && entry.kit === kit;
+    });
 
-  // CART BUTTON
-  const cartBtn = document.createElement("button");
-  cartBtn.id = "aq-cart-btn";
-  cartBtn.textContent = "Cart (0)";
-  nav.appendChild(cartBtn);
+    if (!item) return;
 
-  function countItems() {
-    return Object.values(cart).reduce(
-      (sum, item) => sum + item.qty, 0
+    item.qty += change;
+
+    if (item.qty <= 0) {
+      cart = cart.filter(function (entry) {
+        return !(entry.id === id && entry.kit === kit);
+      });
+    }
+
+    if (item.qty > 99) item.qty = 99;
+
+    renderCart();
+  }
+
+  function removeItem(id, kit) {
+    cart = cart.filter(function (item) {
+      return !(item.id === id && item.kit === kit);
+    });
+
+    renderCart();
+  }
+
+  function clearCart() {
+    if (!cart.length) return;
+
+    if (!confirm("Clear all items from your cart?")) return;
+
+    cart = [];
+    renderCart();
+  }
+
+  function canUseRefill(id) {
+    return verified &&
+      starterKitPurchases[String(id)] === true;
+  }
+
+  // Public functions used by AQUENIX storefront.
+  window.aqAddProduct = addProduct;
+  window.aqCanUseRefill = canUseRefill;
+  window.aqRefreshDetailRefill = function () {
+    renderCart();
+  };
+
+
+  // ---------------------------------------------------
+  // CART PANEL
+  // ---------------------------------------------------
+
+  function createPanel() {
+    if (document.getElementById("aq-cart-panel")) return;
+
+    const panel = document.createElement("div");
+    panel.id = "aq-cart-panel";
+
+    panel.innerHTML = `
+      <div class="aq-cart-overlay"></div>
+
+      <div class="aq-cart-box">
+        <div class="aq-cart-heading">
+          <strong>AQUENIX Your Cart</strong>
+          <button type="button" id="aq-close-cart">×</button>
+        </div>
+
+        <div id="aq-cart-items"></div>
+
+        <div class="aq-cart-total">
+          <span>Total</span>
+          <strong id="aq-cart-total">₹0</strong>
+        </div>
+
+        <button type="button" id="aq-clear-cart" class="aq-secondary">
+          Clear Cart
+        </button>
+
+        <button type="button" id="aq-checkout" class="aq-primary">
+          Continue to Checkout
+        </button>
+
+        <div id="aq-customer-area"></div>
+
+        <p class="aq-demo-note">
+          Demo checkout only. No payment will be collected.
+        </p>
+
+        <div id="aq-cart-message" role="status"></div>
+      </div>
+    `;
+
+    document.body.appendChild(panel);
+
+    panel.querySelector(".aq-cart-overlay").addEventListener(
+      "click", closeCart
+    );
+
+    document.getElementById("aq-close-cart").addEventListener(
+      "click", closeCart
+    );
+
+    document.getElementById("aq-clear-cart").addEventListener(
+      "click", clearCart
+    );
+
+    document.getElementById("aq-checkout").addEventListener(
+      "click", beginCustomerProcess
     );
   }
 
-  function update() {
-    cartBtn.textContent = `Cart (${countItems()})`;
 
-    const items = document.getElementById("aq-items");
-    items.innerHTML = "";
+  // ---------------------------------------------------
+  // CART STYLES
+  // ---------------------------------------------------
 
-    let total = 0;
+  function addStyles() {
+    if (document.getElementById("aq-cart-styles")) return;
 
-    Object.entries(cart).forEach(([key, item]) => {
-      const product = products[item.id];
-      const price = prices[item.id];
+    const style = document.createElement("style");
+    style.id = "aq-cart-styles";
 
-      total += price * item.qty;
+    style.textContent = `
+      #aq-cart-panel {
+        display:none;
+        position:fixed;
+        inset:0;
+        z-index:999999;
+        font-family:Arial,sans-serif;
+      }
 
-      const div = document.createElement("div");
-      div.className = "aq-item";
+      #aq-cart-panel.aq-open {
+        display:block;
+      }
 
-      const title = document.createElement("b");
-      title.textContent = product[0];
+      .aq-cart-overlay {
+        position:absolute;
+        inset:0;
+        background:rgba(0,0,0,.55);
+      }
 
-      const details = document.createElement("p");
-      details.className = "aq-note";
-      details.textContent = product[1] + " · Product " + item.id;
+      .aq-cart-box {
+        position:absolute;
+        right:0;
+        top:0;
+        height:100%;
+        width:min(440px,100%);
+        box-sizing:border-box;
+        background:#fff;
+        padding:20px;
+        overflow-y:auto;
+        box-shadow:-5px 0 25px rgba(0,0,0,.15);
+      }
 
-      const kit = document.createElement("p");
-      kit.textContent = item.kit === "starter"
-        ? "Starter Kit: 1 matching reusable bottle + product-specific tablets"
-        : "Refill Pack: matching product-specific tablets only";
+      .aq-cart-heading {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        font-size:20px;
+        padding-bottom:16px;
+        border-bottom:1px solid #ddd;
+      }
 
-      const priceLine = document.createElement("p");
-      priceLine.textContent = `Demo price ₹${price} × ${item.qty}`;
+      #aq-close-cart {
+        border:0;
+        background:none;
+        font-size:30px;
+        cursor:pointer;
+      }
 
-      const controls = document.createElement("div");
+      .aq-cart-item {
+        padding:14px 0;
+        border-bottom:1px solid #eee;
+      }
 
-      ["minus", "plus", "remove"].forEach(action => {
-        const button = document.createElement("button");
+      .aq-cart-item-title {
+        font-weight:bold;
+        margin-bottom:6px;
+      }
 
-        button.textContent = action === "minus" ? "−" :
-          action === "plus" ? "+" : "Remove";
+      .aq-cart-item-meta {
+        color:#555;
+        font-size:14px;
+        margin-bottom:8px;
+      }
 
-        button.dataset.key = key;
-        button.dataset.action = action;
+      .aq-cart-item-actions {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+      }
 
-        controls.appendChild(button);
+      .aq-quantity button {
+        padding:5px 11px;
+        margin:0 4px;
+        cursor:pointer;
+      }
+
+      .aq-remove {
+        border:0;
+        background:none;
+        color:#b42318;
+        cursor:pointer;
+      }
+
+      .aq-cart-total {
+        display:flex;
+        justify-content:space-between;
+        font-size:19px;
+        padding:18px 0;
+      }
+
+      .aq-primary,.aq-secondary {
+        width:100%;
+        padding:13px;
+        margin:7px 0;
+        border-radius:6px;
+        cursor:pointer;
+        font-size:15px;
+      }
+
+      .aq-primary {
+        background:#087f8c;
+        color:#fff;
+        border:0;
+      }
+
+      .aq-secondary {
+        background:#fff;
+        color:#333;
+        border:1px solid #ccc;
+      }
+
+      .aq-form {
+        margin-top:18px;
+        padding-top:15px;
+        border-top:1px solid #ddd;
+      }
+
+      .aq-form h3 {
+        margin:0 0 12px;
+      }
+
+      .aq-form label {
+        display:block;
+        margin:10px 0 5px;
+        font-size:14px;
+      }
+
+      .aq-form input {
+        width:100%;
+        box-sizing:border-box;
+        padding:12px;
+        border:1px solid #bbb;
+        border-radius:5px;
+        font-size:15px;
+      }
+
+      .aq-form button {
+        margin-top:12px;
+      }
+
+      .aq-demo-note {
+        font-size:12px;
+        color:#666;
+        text-align:center;
+      }
+
+      #aq-cart-message {
+        margin-top:12px;
+        font-size:14px;
+        line-height:1.5;
+      }
+
+      .aq-success {
+        color:#087443;
+      }
+
+      .aq-error {
+        color:#b42318;
+      }
+
+      .aq-muted {
+        color:#666;
+        font-size:13px;
+      }
+
+      @media(max-width:480px) {
+        .aq-cart-box {
+          width:100%;
+          padding:16px;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+
+  // ---------------------------------------------------
+  // CART DISPLAY
+  // ---------------------------------------------------
+
+  function renderCart() {
+    createPanel();
+
+    const list = document.getElementById("aq-cart-items");
+    const total = document.getElementById("aq-cart-total");
+
+    if (!cart.length) {
+      list.innerHTML =
+        '<p class="aq-muted">Your cart is empty.</p>';
+    } else {
+      list.innerHTML = cart.map(function (item) {
+        const product = getProduct(item.id);
+        const kitName =
+          item.kit === "starter" ? "Starter Kit" : "Refill";
+
+        return `
+          <div class="aq-cart-item">
+            <div class="aq-cart-item-title">
+              ${escapeHtml(product.name)}
+            </div>
+
+            <div class="aq-cart-item-meta">
+              ${kitName} · ₹${product.price} each
+            </div>
+
+            <div class="aq-cart-item-actions">
+              <div class="aq-quantity">
+                <button type="button"
+                  data-action="minus"
+                  data-id="${item.id}"
+                  data-kit="${item.kit}">−</button>
+
+                ${item.qty}
+
+                <button type="button"
+                  data-action="plus"
+                  data-id="${item.id}"
+                  data-kit="${item.kit}">+</button>
+              </div>
+
+              <strong>₹${product.price * item.qty}</strong>
+
+              <button type="button"
+                class="aq-remove"
+                data-action="remove"
+                data-id="${item.id}"
+                data-kit="${item.kit}">Remove</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    total.textContent = "₹" + getCartTotal();
+
+    list.querySelectorAll("[data-action]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const id = button.dataset.id;
+        const kit = button.dataset.kit;
+        const action = button.dataset.action;
+
+        if (action === "plus") changeQuantity(id, kit, 1);
+        if (action === "minus") changeQuantity(id, kit, -1);
+        if (action === "remove") removeItem(id, kit);
       });
-
-      div.append(title, details, kit, priceLine, controls);
-      items.appendChild(div);
     });
-
-    if (!countItems()) {
-      items.textContent = "Your cart is empty.";
-    }
-
-    document.getElementById("aq-total").textContent =
-      `Demo total: ₹${total}`;
   }
 
-  // CART EVENTS
-  cartBtn.onclick = () => {
-    update();
-    panel.style.display = "flex";
-  };
 
-  document.getElementById("aq-close").onclick = () => {
-    panel.style.display = "none";
-  };
+  function openCart() {
+    createPanel();
+    renderCart();
 
-  panel.onclick = event => {
-    if (event.target === panel) {
-      panel.style.display = "none";
-    }
-  };
-
-  document.getElementById("aq-items").onclick = event => {
-    const button = event.target.closest("button[data-key]");
-    if (!button) return;
-
-    const key = button.dataset.key;
-    if (!cart[key]) return;
-
-    if (button.dataset.action === "plus") cart[key].qty++;
-    if (button.dataset.action === "minus") cart[key].qty--;
-
-    if (button.dataset.action === "remove" ||
-        cart[key].qty <= 0) {
-      delete cart[key];
-    }
-
-    removeIneligibleRefills();
-    update();
-    refreshProductButtons();
-  };
-
-  document.getElementById("aq-clear").onclick = () => {
-    Object.keys(cart).forEach(key => delete cart[key]);
-    update();
-    refreshProductButtons();
-  };
-
-  // CUSTOMER REGISTRATION AND EMAIL OTP
-  const form = document.getElementById("aq-registration");
-  const status = document.getElementById("aq-register-status");
-  const registerButton = document.getElementById("aq-register");
-  const verifyButton = document.getElementById("aq-verify");
-  const checkoutButton = document.getElementById("aq-checkout");
-
-  function getCustomerData() {
-    return {
-      mobile: document.getElementById("aq-mobile").value.trim(),
-      fullName: document.getElementById("aq-name").value.trim(),
-      email: document.getElementById("aq-email").value.trim(),
-      customerType: "Household",
-      city: document.getElementById("aq-city").value.trim(),
-
-      interestedCategories: [...new Set(
-        Object.values(cart).map(item => products[item.id][1])
-      )].join(", "),
-
-      whatsappConsent: String(
-        document.getElementById("aq-whatsapp").checked
-      )
-    };
+    document.getElementById("aq-cart-panel")
+      .classList.add("aq-open");
   }
 
-  form.addEventListener("submit", async event => {
-    event.preventDefault();
+  function closeCart() {
+    const panel = document.getElementById("aq-cart-panel");
+    if (panel) panel.classList.remove("aq-open");
+  }
 
-    if (!countItems()) {
-      status.className = "aq-error";
-      status.textContent = "Add a product pack to your cart first.";
+  function showMessage(message, isError) {
+    const box = document.getElementById("aq-cart-message");
+    if (!box) return;
+
+    box.className = isError ? "aq-error" : "aq-success";
+    box.textContent = message;
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (char) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char];
+    });
+  }
+
+
+  // ---------------------------------------------------
+  // CUSTOMER IDENTIFICATION
+  // ---------------------------------------------------
+
+  function beginCustomerProcess() {
+    if (busy) return;
+
+    if (!cart.length) {
+      showMessage("Your cart is empty.", true);
       return;
     }
 
-    const data = getCustomerData();
-
-    if (!/^[6-9][0-9]{9}$/.test(data.mobile)) {
-      status.className = "aq-error";
-      status.textContent =
-        "Enter a valid 10-digit Indian mobile number.";
+    if (verified && sessionToken) {
+      saveDemoCheckout();
       return;
     }
 
-    if (data.email &&
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-      status.className = "aq-error";
-      status.textContent = "Enter a valid email address.";
+    showCustomerForm();
+  }
+
+
+  function showCustomerForm() {
+    const area = document.getElementById("aq-customer-area");
+
+    area.innerHTML = `
+      <div class="aq-form">
+        <h3>Customer Details</h3>
+
+        <p class="aq-muted">
+          Enter your mobile number to continue.
+        </p>
+
+        <label for="aq-mobile">Mobile Number</label>
+        <input id="aq-mobile"
+          type="tel"
+          maxlength="10"
+          inputmode="numeric"
+          placeholder="10-digit mobile number">
+
+        <button type="button" id="aq-identify"
+          class="aq-primary">
+          Continue
+        </button>
+
+        <div id="aq-registration-area"></div>
+      </div>
+    `;
+
+    document.getElementById("aq-identify")
+      .addEventListener("click", identifyCustomer);
+  }
+
+
+  async function identifyCustomer() {
+    if (busy) return;
+
+    const mobile = document.getElementById("aq-mobile")
+      .value.trim();
+
+    if (!/^[6-9][0-9]{9}$/.test(mobile)) {
+      showMessage("Enter a valid 10-digit Indian mobile number.", true);
       return;
     }
 
-    requestData = data;
-
-    registerButton.disabled = true;
-    registerButton.textContent = "Sending OTP...";
-
-    status.className = "aq-note";
-    status.textContent = "Requesting email verification code...";
+    busy = true;
+    showMessage("Checking customer details...", false);
 
     try {
-      const result = await jsonp("sendOtp", data);
+      const response = await jsonp("checkCustomer", {
+        mobile: mobile
+      });
 
-      if (!result || !result.success) {
-        throw new Error(result?.message || "Could not send OTP.");
+      customerMobile = mobile;
+      customerStatus = response.existing ? "existing" : "new";
+
+      if (response.existing) {
+        showExistingCustomerForm();
+        showMessage(
+          "Namaste! Welcome back to AQUENIX. Please verify your email before checkout.",
+          false
+        );
+      } else {
+        showNewCustomerForm();
+        showMessage(
+          "Welcome to AQUENIX! Please complete your registration.",
+          false
+        );
       }
+
+    } catch (error) {
+      showMessage(error.message, true);
+    } finally {
+      busy = false;
+    }
+  }
+
+
+  // ---------------------------------------------------
+  // EXISTING CUSTOMER
+  // ---------------------------------------------------
+
+  function showExistingCustomerForm() {
+    const area = document.getElementById("aq-registration-area");
+
+    area.innerHTML = `
+      <div class="aq-form">
+        <h3>Welcome Back!</h3>
+
+        <p class="aq-muted">
+          Your verification code will be sent to your registered email address.
+        </p>
+
+        <button type="button" id="aq-send-otp"
+          class="aq-primary">
+          Send Email OTP
+        </button>
+
+        <div id="aq-otp-area"></div>
+      </div>
+    `;
+
+    document.getElementById("aq-send-otp")
+      .addEventListener("click", sendCustomerOtp);
+  }
+
+
+  // ---------------------------------------------------
+  // NEW CUSTOMER REGISTRATION
+  // ---------------------------------------------------
+
+  function showNewCustomerForm() {
+    const area = document.getElementById("aq-registration-area");
+
+    area.innerHTML = `
+      <div class="aq-form">
+        <h3>New Customer Registration</h3>
+
+        <label for="aq-name">Full Name</label>
+        <input id="aq-name" type="text"
+          placeholder="Enter your full name">
+
+        <label for="aq-email">Email Address</label>
+        <input id="aq-email" type="email"
+          placeholder="Enter your email">
+
+        <label for="aq-city">City</label>
+        <input id="aq-city" type="text"
+          placeholder="Enter your city">
+
+        <button type="button" id="aq-register-otp"
+          class="aq-primary">
+          Register and Send OTP
+        </button>
+
+        <div id="aq-otp-area"></div>
+      </div>
+    `;
+
+    document.getElementById("aq-register-otp")
+      .addEventListener("click", function () {
+        const fullName =
+          document.getElementById("aq-name").value.trim();
+
+        const email =
+          document.getElementById("aq-email").value.trim();
+
+        const city =
+          document.getElementById("aq-city").value.trim();
+
+        if (!fullName || !email || !city) {
+          showMessage("Please enter your name, email and city.", true);
+          return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          showMessage("Enter a valid email address.", true);
+          return;
+        }
+
+        registrationDetails = {
+          fullName: fullName,
+          email: email,
+          city: city,
+          customerType: "Household"
+        };
+
+        sendCustomerOtp();
+      });
+  }
+
+
+  // ---------------------------------------------------
+  // SEND OTP
+  // ---------------------------------------------------
+
+  async function sendCustomerOtp() {
+    if (busy) return;
+
+    busy = true;
+    showMessage("Sending verification code...", false);
+
+    try {
+      const data = {
+        mobile: customerMobile
+      };
+
+      if (customerStatus === "new") {
+        if (!registrationDetails) {
+          throw new Error("Please complete registration first.");
+        }
+
+        data.fullName = registrationDetails.fullName;
+        data.email = registrationDetails.email;
+        data.city = registrationDetails.city;
+        data.customerType = "Household";
+      }
+
+      const response = await jsonp("sendOtp", data);
 
       otpSent = true;
+      showOtpForm(response.maskedEmail);
 
-      document.getElementById("aq-otp-area").hidden = false;
-
-      status.className = "aq-success";
-
-      status.textContent = result.maskedEmail
-        ? "OTP sent to registered email: " + result.maskedEmail
-        : "OTP sent. Please check your email inbox and spam folder.";
-
-      document.getElementById("aq-otp").focus();
+      showMessage(
+        "Verification code sent to " + response.maskedEmail,
+        false
+      );
 
     } catch (error) {
-      status.className = "aq-error";
-      status.textContent = error.message;
-
+      showMessage(error.message, true);
     } finally {
-      registerButton.disabled = false;
-      registerButton.textContent = "Send email OTP";
+      busy = false;
     }
-  });
+  }
 
-  verifyButton.onclick = async () => {
-    const otp = document.getElementById("aq-otp").value.trim();
 
-    if (!otpSent || !requestData) {
-      status.className = "aq-error";
-      status.textContent = "Please request an OTP first.";
-      return;
-    }
+  // ---------------------------------------------------
+  // OTP FORM
+  // ---------------------------------------------------
+
+  function showOtpForm(maskedEmail) {
+    const area = document.getElementById("aq-otp-area");
+
+    area.innerHTML = `
+      <div class="aq-form">
+        <p class="aq-muted">
+          Enter the 6-digit code sent to ${escapeHtml(maskedEmail || "your email")}.
+        </p>
+
+        <label for="aq-otp">Email Verification Code</label>
+        <input id="aq-otp"
+          type="text"
+          maxlength="6"
+          inputmode="numeric"
+          placeholder="Enter 6-digit OTP">
+
+        <button type="button" id="aq-verify-otp"
+          class="aq-primary">
+          Verify OTP
+        </button>
+      </div>
+    `;
+
+    document.getElementById("aq-verify-otp")
+      .addEventListener("click", verifyCustomerOtp);
+  }
+
+
+  // ---------------------------------------------------
+  // VERIFY OTP
+  // ---------------------------------------------------
+
+  async function verifyCustomerOtp() {
+    if (busy) return;
+
+    const otp = document.getElementById("aq-otp")
+      .value.trim();
 
     if (!/^[0-9]{6}$/.test(otp)) {
-      status.className = "aq-error";
-      status.textContent = "Enter the 6-digit OTP from your email.";
+      showMessage("Enter the 6-digit verification code.", true);
       return;
     }
 
-    verifyButton.disabled = true;
-    verifyButton.textContent = "Verifying...";
-
-    status.className = "aq-note";
-    status.textContent = "Verifying your email...";
+    busy = true;
+    showMessage("Verifying your email...", false);
 
     try {
-      const result = await jsonp("verifyOtp", {
-        ...requestData,
-        otp
+      const response = await jsonp("verifyOtp", {
+        mobile: customerMobile,
+        otp: otp
       });
 
-      if (!result || !result.success || result.verified !== true) {
-        throw new Error(
-          result?.message || "OTP verification failed."
-        );
+      if (!response.verified || !response.sessionToken) {
+        throw new Error("Verification failed. Please try again.");
       }
 
-      if (!result.sessionToken) {
-        throw new Error(
-          "Verification session missing. Please verify OTP again."
-        );
-      }
-
-      if (!result.starterKitPurchases ||
-          typeof result.starterKitPurchases !== "object") {
-        throw new Error(
-          "Product purchase history could not be read. " +
-          "Please contact AQUENIX support."
-        );
-      }
-
-      // SAVE SESSION TOKEN AFTER SUCCESSFUL OTP
-      sessionToken = result.sessionToken;
       verified = true;
-      starterKitPurchases = result.starterKitPurchases;
+      sessionToken = response.sessionToken;
+      customerName = response.customerName || "";
+      starterKitPurchases = response.starterKitPurchases || {};
 
-      removeIneligibleRefills();
-      refreshProductButtons();
+      document.getElementById("aq-customer-area").innerHTML = `
+        <div class="aq-form">
+          <h3>Verification Successful</h3>
+          <p class="aq-success">
+            ${escapeHtml(response.message || "Your email is verified.")}
+          </p>
+          <p class="aq-muted">
+            You can now continue to demo checkout.
+          </p>
+        </div>
+      `;
 
-      checkoutButton.disabled = false;
-      form.hidden = true;
-
-      document.getElementById("aq-otp-area").hidden = true;
-
-      status.className = "aq-success";
-      status.textContent =
-        result.message || "Email verified successfully.";
-
-      document.getElementById("aq-access-status").textContent =
-        "Verified customer. Refill eligibility is checked separately " +
-        "for each product using your confirmed Starter Kit purchase history.";
-
-      document.getElementById("aq-preview").textContent =
-        "Email verified. You can continue to the demonstration " +
-        "checkout. No order or payment will be made.";
-
-      update();
+      showMessage("Email verified successfully.", false);
+      renderCart();
 
     } catch (error) {
-      status.className = "aq-error";
-      status.textContent = error.message;
-
+      showMessage(error.message, true);
     } finally {
-      verifyButton.disabled = false;
-      verifyButton.textContent = "Verify OTP";
+      busy = false;
     }
-  };
+  }
 
-  // SAVE CART TO GOOGLE SHEET - DEMO CHECKOUT ONLY
-  checkoutButton.onclick = async () => {
+
+  // ---------------------------------------------------
+  // SAVE DEMO CHECKOUT
+  // ---------------------------------------------------
+
+  async function saveDemoCheckout() {
+    if (busy) return;
+
     if (!verified || !sessionToken) {
-      document.getElementById("aq-preview").textContent =
-        "Please verify your email OTP first.";
+      showMessage("Please verify your email first.", true);
       return;
     }
 
-    if (!countItems()) {
-      document.getElementById("aq-preview").textContent =
-        "Your cart is empty.";
+    if (!cart.length) {
+      showMessage("Your cart is empty.", true);
       return;
     }
 
-    const items = Object.values(cart).map(item => ({
-      id: item.id,
-      kit: item.kit,
-      qty: item.qty
-    }));
+    busy = true;
+    showMessage("Recording your demo checkout...", false);
 
-    checkoutButton.disabled = true;
-    checkoutButton.textContent = "Saving checkout...";
+    const items = cart.map(function (item) {
+      return {
+        id: item.id,
+        kit: item.kit,
+        qty: item.qty
+      };
+    });
 
     try {
-      const result = await jsonp("saveCheckout", {
+      const response = await jsonp("saveCheckout", {
         sessionToken: sessionToken,
-        items: JSON.stringify(items)
+        items: items
       });
 
-      if (!result || !result.success) {
-        throw new Error(
-          result?.message || "Could not save checkout."
-        );
+      if (!response.success) {
+        throw new Error("Unable to record checkout.");
       }
 
-      document.getElementById("aq-preview").textContent =
-        "Demo checkout successfully recorded in AQUENIX. " +
-        "Reference: " + result.checkoutRef +
-        ". No order or payment has been made.";
+      document.getElementById("aq-customer-area").innerHTML = `
+        <div class="aq-form">
+          <h3>Demo Checkout Recorded</h3>
 
-      checkoutButton.textContent = "Checkout Recorded";
+          <p class="aq-success">
+            Thank you${customerName ? ", " + escapeHtml(customerName) : ""}!
+          </p>
+
+          <p>
+            Reference: <strong>${escapeHtml(response.checkoutRef || "")}</strong>
+          </p>
+
+          <p class="aq-muted">
+            Status: Demo Checkout - Not Paid
+          </p>
+
+          <p class="aq-muted">
+            No payment has been collected. This is a demonstration only.
+          </p>
+        </div>
+      `;
+
+      showMessage(
+        "Your demo checkout has been recorded successfully.",
+        false
+      );
+
+      cart = [];
+      renderCart();
+
+      document.getElementById("aq-checkout").disabled = true;
+      document.getElementById("aq-checkout").textContent =
+        "Demo Checkout Completed";
 
     } catch (error) {
-      document.getElementById("aq-preview").textContent =
-        "Checkout not recorded: " + error.message;
-
-      checkoutButton.disabled = false;
-      checkoutButton.textContent = "Continue to preview";
+      showMessage(error.message, true);
+    } finally {
+      busy = false;
     }
+  }
+
+
+  // ---------------------------------------------------
+  // CART BUTTON IN WEBSITE NAVIGATION
+  // ---------------------------------------------------
+
+  function addCartButton() {
+    if (document.getElementById("aq-open-cart")) return;
+
+    const button = document.createElement("button");
+    button.id = "aq-open-cart";
+    button.type = "button";
+    button.innerHTML = "Cart (<span id='aq-cart-count'>0</span>)";
+
+    button.style.cssText =
+      "border:1px solid #087f8c;background:#087f8c;color:white;" +
+      "padding:9px 14px;border-radius:6px;cursor:pointer;" +
+      "font-size:14px;margin-left:10px;";
+
+    button.addEventListener("click", openCart);
+
+    const nav = document.querySelector("header nav") ||
+      document.querySelector("nav");
+
+    if (nav) {
+      nav.appendChild(button);
+    } else {
+      document.body.appendChild(button);
+    }
+  }
+
+
+  function updateCartCount() {
+    const count = document.getElementById("aq-cart-count");
+    if (count) count.textContent = getCartCount();
+  }
+
+
+  // Keep count updated whenever the cart changes.
+  const originalRenderCart = renderCart;
+
+  renderCart = function () {
+    originalRenderCart();
+    updateCartCount();
   };
 
-  update();
+
+  // ---------------------------------------------------
+  // INITIALISE
+  // ---------------------------------------------------
+
+  function init() {
+    addStyles();
+    createPanel();
+    addCartButton();
+    renderCart();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 
 })();
