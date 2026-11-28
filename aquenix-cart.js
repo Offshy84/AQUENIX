@@ -1,4 +1,3 @@
-JavaScript
 
 /* =====================================================
    AQUENIX CART + HOMEPAGE CUSTOMER IDENTIFICATION
