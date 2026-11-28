@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#073f3b">
-<meta name="description" content="AQUENIX - Add Water. Get Pure Clean. Reusable bottles and cleaning refill concepts.">
+<meta name="description" content="AQUENIX - Add Water. Get Pure Clean.">
 <title>AQUENIX | Add Water. Get Pure Clean.</title>
 <link rel="icon" href="assets/icon-192.png">
 
@@ -16,7 +16,6 @@
   --green:#319d55;
   --ink:#142b31;
   --muted:#647772;
-  --pale:#eaf7f5;
   --line:#dcebe7;
 }
 *{box-sizing:border-box}
@@ -25,13 +24,11 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background
 .wrap{width:min(1440px,calc(100% - 44px));margin:auto}
 header{position:sticky;top:0;z-index:100;background:#ffffffed;backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .nav{min-height:78px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--dark);font-size:30px;font-weight:900;letter-spacing:-1px}
-.brand-mark{width:48px;height:54px;flex:none}
-.brand small{display:block;font-size:12px;font-weight:700;letter-spacing:0;color:#126b69}
+.brand img{width:280px;max-width:55vw;height:auto;display:block}
 .links{display:flex;align-items:center;gap:25px}
 .links a{font-size:14px;font-weight:700;color:var(--ink);text-decoration:none}
 .links a:hover{color:var(--teal)}
-.menu{display:none;border:0;background:white;font-size:26px}
+.menu{display:none;border:0;background:white;font-size:26px;cursor:pointer}
 .hero{background:#eaf8f8;overflow:hidden}
 .hero-banner{width:100%;display:block;max-height:490px;object-fit:cover}
 .hero-mobile{display:none}
@@ -71,8 +68,7 @@ footer{text-align:center;padding:28px 0;color:var(--muted);font-size:12px}
 @media(max-width:700px){
  .wrap{width:calc(100% - 28px)}
  .nav{min-height:66px}
- .brand{font-size:23px}
- .brand-mark{width:38px;height:44px}
+ .brand img{width:210px;max-width:65vw}
  .menu{display:block}
  .links{display:none;position:absolute;top:66px;left:0;right:0;background:white;padding:20px;flex-direction:column;align-items:flex-start;border-bottom:1px solid var(--line)}
  .links.open{display:flex}
@@ -98,12 +94,7 @@ footer{text-align:center;padding:28px 0;color:var(--muted);font-size:12px}
 <header>
  <div class="wrap nav">
   <a class="brand" href="#home" aria-label="AQUENIX Home">
-   <svg class="brand-mark" viewBox="0 0 48 54" aria-hidden="true">
-    <path d="M24 2C17 14 5 25 5 36a19 19 0 0 0 38 0C43 25 31 14 24 2Z" fill="#168fc4"/>
-    <path d="M8 39c11-8 22-8 34-2-7 15-25 20-34 2Z" fill="#39a64c"/>
-    <path d="M13 40c8-4 16-5 24-3" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-   </svg>
-   <span>AQUENIX<small>Add Water. Get Pure Clean.</small></span>
+   <img src="assets/aquenix-logo.png" alt="AQUENIX - Add Water. Get Pure Clean.">
   </a>
   <button class="menu" id="menu" aria-label="Open menu">☰</button>
   <nav class="links" id="links">
@@ -210,7 +201,7 @@ footer{text-align:center;padding:28px 0;color:var(--muted);font-size:12px}
   </div>
  </section>
 </main>
-//
+
 <footer>
  <div class="wrap">
   <strong>AQUENIX</strong>
